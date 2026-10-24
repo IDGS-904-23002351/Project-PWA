@@ -1,5 +1,5 @@
 // Dirección del backend
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5022'
+const API_URL = import.meta.env.VITE_API_URL ?? 'https://localhost:7219'
 
 // Hace un fetch y convierte los errores HTTP en errores de JavaScript con un mensaje legible
 async function peticion(ruta, opciones = {}) {
