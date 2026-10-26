@@ -13,7 +13,7 @@ import BarChartIcon from '@mui/icons-material/BarChart'
 import SettingsIcon from '@mui/icons-material/Settings'
 import HistoryIcon from '@mui/icons-material/History'
 import { useAuth } from '../context/AuthContext'
-import { obtenerMenuUsuario } from '../api/authApi'
+import { obtenerMenuUsuario } from '../api/inicioApi.js';
 
 const ICONOS_MAP = {
   Inicio: <HomeIcon />,

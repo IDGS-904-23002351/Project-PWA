@@ -4,7 +4,7 @@ import {
   TableHead, TableRow, Button, Chip, TextField, MenuItem, Drawer, Avatar, Alert, CircularProgress
 } from '@mui/material'
 import FileDownloadIcon from '@mui/icons-material/FileDownload'
-import { obtenerAsistencias, corregirAsistencia } from '../api/authApi'
+import { obtenerAsistencias } from '../api/asistenciaApi'
 
 export default function Asistencias() {
   const [asistencias, setAsistencias] = useState([])
@@ -50,7 +50,7 @@ export default function Asistencias() {
     }
     try {
       setGuardando(true)
-      await corregirAsistencia(seleccionado.id, {
+      await asistenciaApi.corregirAsistencia(seleccionado.id, {
         horaEntrada: horaEntradaEdit,
         estado: estadoEdit,
         motivoCorreccion: motivoCorreccion

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Box, Typography, Paper, Tabs, Tab, Button, TextField, Chip, Avatar, CircularProgress, Alert } from '@mui/material'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import CancelIcon from '@mui/icons-material/Cancel'
-import { obtenerSolicitudes, actualizarEstadoSolicitud } from '../api/authApi'
+import { obtenerSolicitudes } from '../api/solicitudApi'
 
 export default function Solicitudes() {
   const [tabValue, setTabValue] = useState(0)
@@ -37,7 +37,7 @@ export default function Solicitudes() {
     if (!seleccionado) return
     try {
       setProcesando(true)
-      await actualizarEstadoSolicitud(seleccionado.id, {
+      await solicitudApi.actualizarEstado(seleccionado.id, {
         estado: nuevoEstado,
         comentarioRespuesta: comentario
       })

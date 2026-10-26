@@ -4,7 +4,7 @@ import DownloadIcon from '@mui/icons-material/Download'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { obtenerMetricasDashboard } from '../api/authApi'
+import { obtenerMetricasDashboard } from '../api/inicioApi'
 
 export default function Inicio() {
   const { sesion } = useAuth()
@@ -26,7 +26,7 @@ export default function Inicio() {
       try {
         setCargando(true)
         setError(null)
-        const datos = await obtenerMetricasDashboard()
+        const datos = await obtenerMetricasDashboard()       
         setMetricas(datos)
       } catch (err) {
         setError(err.message || 'Error al conectar con el servidor.')
