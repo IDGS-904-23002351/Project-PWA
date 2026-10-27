@@ -3,6 +3,8 @@ import RutaProtegida from './components/RutaProtegida'
 import Layout from './components/Layout'
 import Inicio from './pages/Inicio'
 import Login from './pages/Login'
+import Departamentos from './pages/Departamento';
+import Planta from './pages/Planta';
 import Empleados from './pages/Empleados';
 import Asistencias from './pages/Asistencias'   
 import Solicitudes from './pages/Solicitudes'
@@ -16,6 +18,8 @@ export default function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<Inicio />} />
           <Route path="/inicio" element={<Inicio />} />
+          <Route path="planta" element={<Planta />} />
+          <Route path="departamentos" element={<Departamentos />} />
           <Route path="empleados" element={<Empleados />} />
           <Route path="asistencias" element={<Asistencias />} />
           <Route path="solicitudes" element={<Solicitudes />} />
