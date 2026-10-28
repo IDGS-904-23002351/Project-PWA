@@ -1,28 +1,6 @@
-// Dirección del backend
-const API_URL = import.meta.env.VITE_API_URL ?? 'https://localhost:7219'
+import { peticion } from './http'
 
-// Hace un fetch y convierte los errores HTTP en errores de JavaScript con un mensaje legible
-async function peticion(ruta, opciones = {}) {
-  let respuesta
-  try {
-    respuesta = await fetch(`${API_URL}${ruta}`, {
-      headers: { 'Content-Type': 'application/json', ...opciones.headers },
-      ...opciones,
-    })
-  } catch {
-    throw new Error('No se pudo conectar con el servidor. Revisa tu conexión.')
-  }
-
-  const datos = await respuesta.json().catch(() => ({}))
-  if (!respuesta.ok) {
-    const error = new Error(datos.mensaje || 'Ocurrió un error. Intenta de nuevo.')
-    error.status = respuesta.status
-    throw error
-  }
-  return datos
-}
-
-// POST /api/auth/login
+// POST /api/auth/login  ->  { token, expiracion, usuario: { id, nombre, rol } }
 export function login(credenciales) {
   return peticion('/api/auth/login', {
     method: 'POST',
@@ -30,10 +8,21 @@ export function login(credenciales) {
   })
 }
 
-// POST /api/auth/logout
+// POST /api/auth/logout  (cierra la sesión en la tabla Sesion)
 export function logout(token) {
-  return peticion('/api/auth/logout', {
+  return peticion('/api/auth/logout', { method: 'POST', token })
+}
+
+// GET /api/auth/perfil  ->  datos de la persona y, si tiene, de su empleado
+export function obtenerPerfil(token) {
+  return peticion('/api/auth/perfil', { token })
+}
+
+// POST /api/auth/cambiar-contrasena  (el servidor cierra todas las sesiones del usuario)
+export function cambiarContrasena(token, contrasenaActual, contrasenaNueva) {
+  return peticion('/api/auth/cambiar-contrasena', {
     method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
+    token,
+    body: JSON.stringify({ contrasenaActual, contrasenaNueva }),
   })
 }

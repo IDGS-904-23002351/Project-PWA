@@ -8,6 +8,10 @@ import Planta from './pages/Planta';
 import Empleados from './pages/Empleados';
 import Asistencias from './pages/Asistencias'   
 import Solicitudes from './pages/Solicitudes'
+import Perfil from './pages/Perfil'
+import Bitacora from './pages/Bitacora'
+import Configuracion from './pages/Configuracion'
+import RutaPorRol from './components/RutaPorRol'
 
 export default function App() {
   return (
@@ -23,6 +27,23 @@ export default function App() {
           <Route path="empleados" element={<Empleados />} />
           <Route path="asistencias" element={<Asistencias />} />
           <Route path="solicitudes" element={<Solicitudes />} />
+          <Route path="perfil" element={<Perfil />} />
+          <Route
+            path="bitacora"
+            element={
+              <RutaPorRol roles={['ADMIN']}>
+                <Bitacora />
+              </RutaPorRol>
+            }
+          />
+          <Route
+            path="configuracion"
+            element={
+              <RutaPorRol roles={['ADMIN']}>
+                <Configuracion />
+              </RutaPorRol>
+            }
+          />
         </Route>
       </Route>
 

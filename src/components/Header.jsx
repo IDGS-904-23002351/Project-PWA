@@ -3,10 +3,12 @@ import { Box, InputBase, Avatar, Typography, IconButton, Badge, Menu, MenuItem }
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined'
 import NotificationsNoneOutlinedIcon from '@mui/icons-material/NotificationsNoneOutlined'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 export default function Header() {
   const { sesion, cerrarSesion } = useAuth()
+  const navegar = useNavigate()
   const [anchorEl, setAnchorEl] = useState(null)
   const [busqueda, setBusqueda] = useState('')
 
@@ -123,6 +125,9 @@ export default function Header() {
           onClose={handleCloseMenu}
           PaperProps={{ sx: { borderRadius: 2, mt: 1, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' } }}
         >
+          <MenuItem onClick={() => { handleCloseMenu(); navegar('/perfil') }}>
+            Mi perfil
+          </MenuItem>
           <MenuItem onClick={() => { handleCloseMenu(); cerrarSesion(); }}>
             Cerrar sesión
           </MenuItem>

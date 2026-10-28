@@ -56,7 +56,24 @@ export default function Sidebar() {
   }, [sesion])
 
   return (
-    <Box sx={{ width: 240, bgcolor: '#0b132b', color: 'white', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', p: 2 }}>
+    <Box
+      sx={{
+        width: 240,
+        flexShrink: 0,
+        bgcolor: '#0b132b',
+        color: 'white',
+        // Fijo al alto de la ventana: no se estira cuando la página es larga
+        position: 'sticky',
+        top: 0,
+        height: '100vh',
+        alignSelf: 'flex-start',
+        boxSizing: 'border-box',
+        p: 2,
+        overflowY: 'auto',
+        scrollbarWidth: 'none',
+        '&::-webkit-scrollbar': { display: 'none' },
+      }}
+    >
       <Box>
         {/* Logotipo con la N y Nomi */}
         <Box sx={{ px: 2, py: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -118,17 +135,6 @@ export default function Sidebar() {
             )
           })}
         </List>
-      </Box>
-
-      {/* Usuario en la parte inferior */}
-      <Box sx={{ px: 2, py: 1.5, borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', gap: 1.5 }}>
-        <Box sx={{ width: 32, height: 32, bgcolor: '#0f766e', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.8rem' }}>
-          {sesion?.usuario?.nombre ? sesion.usuario.nombre.charAt(0) + sesion.usuario.nombre.charAt(1) : 'US'}
-        </Box>
-        <Box>
-          <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.85rem' }}>{sesion?.usuario?.nombre || 'Usuario'}</Typography>
-          <Typography variant="caption" sx={{ color: '#94a3b8', fontSize: '0.7rem' }}>{sesion?.usuario?.rol || 'Recursos Humanos'}</Typography>
-        </Box>
       </Box>
     </Box>
   )
