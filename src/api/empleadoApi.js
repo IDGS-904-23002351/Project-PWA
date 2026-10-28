@@ -1,7 +1,6 @@
 // src/api/empleadoApi.js
 const API_URL = import.meta.env.VITE_API_URL ?? 'https://localhost:7219'
 
-// La misma función peticion que tienes en authApi.js
 async function peticion(ruta, opciones = {}) {
   let respuesta
   try {
@@ -10,29 +9,43 @@ async function peticion(ruta, opciones = {}) {
       ...opciones,
     })
   } catch (error) {
-    // Si el error es de certificado SSL en desarrollo, fetch lo lanza como TypeError
-    console.error("Error de red detectado:", error);
+    console.error('Error de red detectado:', error)
     throw new Error('No se pudo conectar con el servidor. Revisa tu conexión o el certificado SSL.')
   }
 
-  const datos = await respuesta.json().catch(() => ({}))
+  if (respuesta.status === 204) return null
+
+  const texto = await respuesta.text()
+  let datos = {}
+  try { datos = texto ? JSON.parse(texto) : {} } catch { datos = { raw: texto } }
+
   if (!respuesta.ok) {
-    const error = new Error(datos.mensaje || 'Ocurrió un error al procesar la solicitud.')
+    console.error(`[${respuesta.status}] ${ruta}`, datos)
+    const mensaje =
+      datos?.mensaje ||
+      datos?.message ||
+      datos?.title ||
+      datos?.error ||
+      (datos?.errors && Object.values(datos.errors).flat().join(', ')) ||
+      `Error ${respuesta.status}: ${respuesta.statusText}`
+    const error = new Error(mensaje)
     error.status = respuesta.status
+    error.detalle = datos
     throw error
   }
+
   return datos
 }
 
 export const empleadoApi = {
-    listar: async (filtros = {}) => {
-        const { buscar = 'null', estado = 'null' } = filtros;
-        // Ajustamos la ruta según el controlador que hicimos
-        const ruta = `/api/empleado/listar`;
-        return peticion(ruta, { method: 'GET' });
-    },
-    
-    obtener: async (id) => {
-        return peticion(`/api/empleado/Obtener/${id}`, { method: 'GET' });
-    }
-};
+  listar: async () => peticion(`/api/Empleado/Listar`, { method: 'GET' }),
+  obtener: async (id) => peticion(`/api/Empleado/Obtener/${id}`, { method: 'GET' }),
+  crear: async (empleado) =>
+    peticion('/api/Empleado/Crear', { method: 'POST', body: JSON.stringify(empleado) }),
+  actualizar: async (id, empleado) =>
+    peticion(`/api/Empleado/Actualizar/${id}`, { method: 'PUT', body: JSON.stringify(empleado) }),
+  eliminar: async (id, motivo = 'No especificado') =>
+    peticion(`/api/Empleado/Eliminar/${id}/${encodeURIComponent(motivo)}`, { method: 'DELETE' }),
+  reactivar: async (id) =>
+    peticion(`/api/Empleado/Reactivar/${id}`, { method: 'PATCH' }),
+}
