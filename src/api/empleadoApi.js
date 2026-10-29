@@ -40,12 +40,14 @@ async function peticion(ruta, opciones = {}) {
 export const empleadoApi = {
   listar: async () => peticion(`/api/Empleado/Listar`, { method: 'GET' }),
   obtener: async (id) => peticion(`/api/Empleado/Obtener/${id}`, { method: 'GET' }),
-  crear: async (empleado) =>
-    peticion('/api/Empleado/Crear', { method: 'POST', body: JSON.stringify(empleado) }),
-  actualizar: async (id, empleado) =>
-    peticion(`/api/Empleado/Actualizar/${id}`, { method: 'PUT', body: JSON.stringify(empleado) }),
-  eliminar: async (id, motivo = 'No especificado') =>
-    peticion(`/api/Empleado/Eliminar/${id}/${encodeURIComponent(motivo)}`, { method: 'DELETE' }),
-  reactivar: async (id) =>
-    peticion(`/api/Empleado/Reactivar/${id}`, { method: 'PATCH' }),
+  crear: async (empleado) => peticion('/api/Empleado/Crear', { method: 'POST', body: JSON.stringify(empleado) }),
+  actualizar: async (id, empleado) => peticion(`/api/Empleado/Actualizar/${id}`, { method: 'PUT', body: JSON.stringify(empleado) }),
+  eliminar: async (id, motivo = 'No especificado') => peticion(`/api/Empleado/Eliminar/${id}?motivo=${encodeURIComponent(motivo)}`, { method: 'DELETE' }),
+  reactivar: async (id) => peticion(`/api/Empleado/Reactivar/${id}`, { method: 'PATCH' }),
+  obtenerEmpresas: async () => peticion('/api/Empleado/Empresas', { method: 'GET' }),
+  obtenerSedes: async () => peticion('/api/Empleado/Sedes', { method: 'GET' }),
+  obtenerDepartamentos: async () => peticion('/api/Empleado/Departamentos', { method: 'GET' }),
+  obtenerTurnos: async () => peticion('/api/Empleado/Turnos', { method: 'GET' }),
+  obtenerRoles: async () => peticion('/api/Empleado/Roles', { method: 'GET' }),
+  obtenerDirecciones: async () => peticion('/api/Empleado/Direcciones', { method: 'GET' }),
 }

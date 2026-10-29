@@ -6,7 +6,6 @@ import {
 } from '@mui/material'
 import { empleadoApi } from '../api/empleadoApi'
 
-// Componente para mostrar un campo
 const Campo = ({ label, value }) => (
   <Grid item xs={12} sm={6} md={4}>
     <Typography variant="caption" color="textSecondary" display="block">
@@ -18,7 +17,6 @@ const Campo = ({ label, value }) => (
   </Grid>
 )
 
-// Componente para agrupar secciones
 const Seccion = ({ titulo, children }) => (
   <>
     <Typography variant="overline" color="textSecondary" sx={{ mt: 1, display: 'block' }}>
@@ -31,7 +29,6 @@ const Seccion = ({ titulo, children }) => (
   </>
 )
 
-// Formateador de fechas
 const fmtFecha = (v) => {
   if (!v) return '—'
   try {
@@ -41,6 +38,14 @@ const fmtFecha = (v) => {
   } catch {
     return v
   }
+}
+
+const fmtDireccion = (d) => {
+  if (!d) return '—'
+  const partes = [d.calle, d.colonia, d.ciudad || d.cuidad, d.estado, d.pais, d.codigo_postal]
+    .filter((x) => x && String(x).trim())
+  if (partes.length) return partes.join(', ')
+  return d.id ? `ID: ${d.id}` : '—'
 }
 
 export default function EmpleadoDetalleModal({ open, onClose, empleadoId }) {
@@ -58,7 +63,6 @@ export default function EmpleadoDetalleModal({ open, onClose, empleadoId }) {
       setDetalle(null)
       try {
         const data = await empleadoApi.obtener(empleadoId)
-        // Acepta si viene envuelto en { empleado: {...} } o el objeto directo
         if (!cancelado) setDetalle(data?.empleado ?? data ?? null)
       } catch (err) {
         if (!cancelado) setError(err.message || 'No se pudo cargar el detalle')
@@ -71,10 +75,10 @@ export default function EmpleadoDetalleModal({ open, onClose, empleadoId }) {
     return () => { cancelado = true }
   }, [open, empleadoId])
 
-  // Extraemos la persona asegurando que si no existe, sea un objeto vacío
   const p = detalle?.persona_id || {}
-  
-  // Armamos el nombre completo usando camelCase
+  const d = p.direccion_id || {}
+  const u = detalle?.usuarios_id || {}
+
   const nombreCompleto = [p.nombre, p.apellido_Paterno, p.apellido_Materno]
     .filter(Boolean).join(' ')
 
@@ -123,14 +127,7 @@ export default function EmpleadoDetalleModal({ open, onClose, empleadoId }) {
               <Campo label="Apellido materno" value={p.apellido_Materno} />
               <Campo label="Correo" value={p.correo} />
               <Campo label="Teléfono" value={p.telefono} />
-              <Campo
-                label="Dirección"
-                value={
-                  p.direccion_id?.calle 
-                    ? `${p.direccion_id.calle} ${p.direccion_id.colonia}` 
-                    : p.direccion_id?.id !== 0 ? `ID: ${p.direccion_id?.id}` : '—'
-                }
-              />
+              <Campo label="Dirección" value={fmtDireccion(d)} />
             </Seccion>
 
             <Seccion titulo="Datos laborales">
@@ -145,11 +142,11 @@ export default function EmpleadoDetalleModal({ open, onClose, empleadoId }) {
               <Campo label="Estado" value={detalle.estado} />
             </Seccion>
 
-            {detalle.usuarios_id && (
+            {u && Object.keys(u).length > 0 && (
               <Seccion titulo="Cuenta de usuario">
-                <Campo label="Usuario" value={detalle.usuarios_id.nombre_usuario} />
-                <Campo label="Rol" value={detalle.usuarios_id.rol_id?.nombre || detalle.usuarios_id.rol_id?.id} />
-                <Campo label="Estado usuario" value={detalle.usuarios_id.estado} />
+                <Campo label="Usuario" value={u.nombre_usuario} />
+                <Campo label="Rol" value={u.rol_id?.nombre || u.rol_id?.id} />
+                <Campo label="Estado usuario" value={u.estado} />
               </Seccion>
             )}
 

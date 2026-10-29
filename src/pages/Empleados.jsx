@@ -21,7 +21,6 @@ export default function Empleados() {
   const [modalOpen, setModalOpen] = useState(false)
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState(null)
 
-  // Detalle (doble click)
   const [detalleOpen, setDetalleOpen] = useState(false)
   const [empleadoDetalleId, setEmpleadoDetalleId] = useState(null)
 
@@ -64,10 +63,23 @@ export default function Empleados() {
     setModalOpen(true)
   }
 
-  const abrirEditar = () => {
-    setEmpleadoSeleccionado(empleadoMenu)
-    setModalOpen(true)
+  const abrirEditar = async () => {
+    const id = empleadoMenu?.id
     cerrarMenu()
+    if (!id) return
+
+    setLoading(true)
+    try {
+      const data = await empleadoApi.obtener(id)
+      const completo = data?.empleado ?? data ?? null
+      
+      setEmpleadoSeleccionado(completo)
+      setModalOpen(true)
+    } catch (error) {
+      setSnackbar({ open: true, message: error.message, severity: 'error' })
+    } finally {
+      setLoading(false)
+    }
   }
 
   const abrirDetalle = (emp) => {
@@ -125,14 +137,13 @@ export default function Empleados() {
 
   return (
     <Box sx={{ p: 4, bgcolor: '#f8f9fa', minHeight: '100vh' }}>
-      {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Box>
           <Typography variant="h4" fontWeight="bold" color="#1e293b">Empleados</Typography>
           <Typography variant="body2" color="textSecondary">
             Administra la información de los {empleados.length} colaboradores.
           </Typography>
-        </Box>
+        </Box><br/>
         <Button
           variant="contained"
           startIcon={<Add />}
@@ -141,9 +152,8 @@ export default function Empleados() {
         >
           Nuevo empleado
         </Button>
-      </Box>
+      </Box><br/>
 
-      {/* Filtros */}
       <Paper sx={{ p: 1, mb: 3, display: 'flex', gap: 2, borderRadius: 3 }} elevation={0}>
         <TextField
           placeholder="Buscar por nombre o número..."
@@ -181,7 +191,6 @@ export default function Empleados() {
         </Select>
       </Paper>
 
-      {/* Tabla */}
       <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 3 }}>
         <Table sx={{ minWidth: 650 }}>
           <TableHead sx={{ bgcolor: '#fff' }}>
@@ -209,27 +218,20 @@ export default function Empleados() {
               </TableRow>
             ) : (
               empleados.map((emp) => (
-                <Tooltip
-                  key={emp.id}
-                  title="Doble click para ver el detalle"
-                  placement="right"
-                  arrow
-                >
-                  <TableRow
-                    hover
-                    onDoubleClick={() => abrirDetalle(emp)}
-                    sx={{ cursor: 'pointer' }}
-                  >
+                <Tooltip key={emp.id} title="Doble click para ver el detalle" placement="right" arrow>
+                  <TableRow hover onDoubleClick={() => abrirDetalle(emp)} sx={{ cursor: 'pointer' }}>
                     <TableCell>
-                      <Box display="flex" alignItems="center" gap={2}>
-                        <Avatar sx={{ bgcolor: '#e0f2f1', color: '#00897b', fontWeight: 'bold' }}>
-                          {getInitials(emp.persona_id?.Nombre, emp.persona_id?.Apellido_Paterno)}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="subtitle2" fontWeight="bold" color="#1e293b">
-                            {`${emp.persona_id?.Nombre || ''} ${emp.persona_id?.Apellido_Paterno || ''}`}
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
+                        <Box sx={{ flexShrink: 0 }}>
+                          <Avatar sx={{ bgcolor: '#e0f2f1', color: '#00897b', fontWeight: 'bold' }}>
+                            {getInitials(emp.persona_id?.nombre, emp.persona_id?.apellido_Paterno)}
+                          </Avatar>
+                        </Box>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
+                          <Typography variant="subtitle2" fontWeight="bold" color="#1e293b" noWrap>
+                            {`${emp.persona_id?.nombre || ''} ${emp.persona_id?.apellido_Paterno || ''}`}
                           </Typography>
-                          <Typography variant="caption" color="textSecondary">
+                          <Typography variant="caption" color="textSecondary" noWrap>
                             {emp.rfc || 'SIN RFC'}
                           </Typography>
                         </Box>
@@ -240,47 +242,38 @@ export default function Empleados() {
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2">
-                        {emp.departamento_id?.Nombre || 'N/A'}
+                        {emp.departamento_id?.nombre || 'N/A'}
                       </Typography>
                     </TableCell>
                     <TableCell>
                       <Chip
-                        label={emp.turno_id?.Nombre === 'Matutino' ? 'Operativo' : 'Administrativo'}
+                        label={emp.turno_id?.nombre === 'Matutino' ? 'Operativo' : 'Administrativo'}
                         size="small"
                         sx={{
-                          bgcolor: emp.turno_id?.Nombre === 'Matutino' ? '#e0f2f1' : '#ede7f6',
-                          color: emp.turno_id?.Nombre === 'Matutino' ? '#00796b' : '#5e35b1',
+                          bgcolor: emp.turno_id?.nombre === 'Matutino' ? '#e0f2f1' : '#ede7f6',
+                          color: emp.turno_id?.nombre === 'Matutino' ? '#00796b' : '#5e35b1',
                           fontWeight: 'bold',
                         }}
                       />
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2">{emp.turno_id?.Nombre || 'N/A'}</Typography>
+                      <Typography variant="body2">{emp.turno_id?.nombre || 'N/A'}</Typography>
                     </TableCell>
                     <TableCell>
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <Box
-                          sx={{
-                            width: 8,
-                            height: 8,
-                            borderRadius: '50%',
-                            bgcolor: emp.estado === 'ACTIVO' ? '#4caf50' : '#9e9e9e',
-                          }}
-                        />
-                        <Typography
-                          variant="body2"
-                          color={emp.estado === 'ACTIVO' ? '#4caf50' : '#757575'}
-                        >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, lineHeight: 1 }}>
+                        <Box component="span" sx={{
+                          width: 8, height: 8, minWidth: 8, minHeight: 8,
+                          borderRadius: '50%', flexShrink: 0, display: 'inline-block',
+                          bgcolor: emp.estado === 'ACTIVO' ? '#4caf50' : '#9e9e9e',
+                        }} />
+                        <Typography variant="body2" component="span" sx={{ lineHeight: 1 }}
+                          color={emp.estado === 'ACTIVO' ? '#4caf50' : '#757575'}>
                           {emp.estado === 'ACTIVO' ? 'Activo' : 'Inactivo'}
                         </Typography>
                       </Box>
                     </TableCell>
                     <TableCell align="right">
-                      <IconButton
-                        size="small"
-                        onClick={(e) => handleMenuOpen(e, emp)}
-                        onDoubleClick={(e) => e.stopPropagation()}
-                      >
+                      <IconButton size="small" onClick={(e) => handleMenuOpen(e, emp)} onDoubleClick={(e) => e.stopPropagation()}>
                         <MoreVert />
                       </IconButton>
                     </TableCell>
@@ -292,7 +285,6 @@ export default function Empleados() {
         </Table>
       </TableContainer>
 
-      {/* Menú acciones */}
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={cerrarMenu}>
         <MenuItem onClick={abrirEditar}>Editar</MenuItem>
         {empleadoMenu?.estado === 'INACTIVO' ? (
@@ -304,7 +296,6 @@ export default function Empleados() {
         )}
       </Menu>
 
-      {/* Modal Crear/Editar */}
       <EmpleadoModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
@@ -312,42 +303,34 @@ export default function Empleados() {
         onSaved={handleSaved}
       />
 
-      {/* Modal Detalle (doble click) */}
       <EmpleadoDetalleModal
         open={detalleOpen}
         onClose={() => setDetalleOpen(false)}
         empleadoId={empleadoDetalleId}
       />
 
-      {/* Confirmar eliminación */}
       <Dialog open={Boolean(confirmDelete)} onClose={() => setConfirmDelete(null)} fullWidth maxWidth="xs">
         <DialogTitle>Eliminar empleado</DialogTitle>
         <DialogContent>
           <DialogContentText sx={{ mb: 2 }}>
             ¿Seguro que deseas eliminar a{' '}
             <strong>
-              {confirmDelete?.persona_id?.Nombre} {confirmDelete?.persona_id?.Apellido_Paterno}
+              {confirmDelete?.persona_id?.nombre} {confirmDelete?.persona_id?.apellido_Paterno}
             </strong>?
           </DialogContentText>
           <TextField
-            fullWidth
-            size="small"
-            label="Motivo (opcional)"
-            value={motivo}
-            onChange={(e) => setMotivo(e.target.value)}
+            fullWidth size="small" label="Motivo (opcional)"
+            value={motivo} onChange={(e) => setMotivo(e.target.value)}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmDelete(null)} disabled={deleting}>
-            Cancelar
-          </Button>
+          <Button onClick={() => setConfirmDelete(null)} disabled={deleting}>Cancelar</Button>
           <Button onClick={handleEliminar} color="error" variant="contained" disabled={deleting}>
             {deleting ? <CircularProgress size={20} color="inherit" /> : 'Eliminar'}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={4000}

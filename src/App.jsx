@@ -6,13 +6,13 @@ import Login from './pages/Login'
 import Departamentos from './pages/Departamento';
 import Planta from './pages/Planta';
 import Empleados from './pages/Empleados';
-import Nomina from './pages/Nomina';
 import Asistencias from './pages/Asistencias'   
 import Solicitudes from './pages/Solicitudes'
 import Perfil from './pages/Perfil'
 import Bitacora from './pages/Bitacora'
 import Configuracion from './pages/Configuracion'
 import RutaPorRol from './components/RutaPorRol'
+import Turno from './pages/TurnosPage';
 
 export default function App() {
   return (
@@ -24,9 +24,9 @@ export default function App() {
           <Route path="/" element={<Inicio />} />
           <Route path="/inicio" element={<Inicio />} />
           <Route path="planta" element={<Planta />} />
-          <Route path="departamento" element={<Departamentos />} />
+          <Route path="departamentos" element={<Departamentos />} />
+          <Route path="Turnos" element={<Turno />} />
           <Route path="empleados" element={<Empleados />} />
-          <Route path="nomina" element={<Nomina />} />
           <Route path="asistencias" element={<Asistencias />} />
           <Route path="solicitudes" element={<Solicitudes />} />
           <Route path="perfil" element={<Perfil />} />
