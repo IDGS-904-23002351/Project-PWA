@@ -1,4 +1,3 @@
-// src/api/turnoApi.js
 const API_URL = import.meta.env.VITE_API_URL ?? 'https://localhost:7219'
 
 async function peticion(ruta, opciones = {}) {
@@ -47,13 +46,15 @@ export const turnoApi = {
     peticion('/api/Turno/Resumen', { method: 'GET' }),
 
   listarAsignaciones: async (buscar = '', turno_id = '', departamento_id = '', pagina = 1, tamano_pagina = 10) => {
-    // Si no hay valor, enviamos '0' para evitar barras dobles (//) que causan error 404
-    const b = buscar ? encodeURIComponent(buscar) : '0'
-    const t = turno_id || '0'
-    const d = departamento_id || '0'
+    const params = new URLSearchParams();
+
+    if (buscar) params.append('buscar', buscar);
+    if (turno_id) params.append('turno_id', turno_id);
+    if (departamento_id) params.append('departamento_id', departamento_id);
+    params.append('pagina', pagina);
+    params.append('tamano_pagina', tamano_pagina);
     
-    // Esta URL se verá así: /api/Turno/Asignaciones/0/0/0/1/10
-    const url = `/api/Turno/Asignaciones/${b}/${t}/${d}/${pagina}/${tamano_pagina}`
+    const url = `/api/Turno/Asignaciones?${params.toString()}`
     
     return peticion(url, { method: 'GET' })
   },
