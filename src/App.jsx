@@ -13,6 +13,7 @@ import Bitacora from './pages/Bitacora'
 import Configuracion from './pages/Configuracion'
 import RutaPorRol from './components/RutaPorRol'
 import Turno from './pages/TurnosPage';
+import Reportes from './pages/Reportes';
 
 export default function App() {
   return (
@@ -30,6 +31,7 @@ export default function App() {
           <Route path="asistencias" element={<Asistencias />} />
           <Route path="solicitudes" element={<Solicitudes />} />
           <Route path="perfil" element={<Perfil />} />
+          <Route path="/reportes" element={<Reportes />} />
           <Route
             path="bitacora"
             element={
