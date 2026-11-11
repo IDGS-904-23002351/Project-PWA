@@ -36,7 +36,8 @@ function Tarjeta({ titulo, children }) {
   return (
     <Paper variant="outlined" sx={{ p: 3 }}>
       <Typography sx={{ fontWeight: 700, mb: 2 }}>{titulo}</Typography>
-      <Box sx={{ display: 'grid', gap: 2.5, gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' } }}>
+      {/* Los datos se acomodan según el ancho de la tarjeta (mínimo 180 px cada uno) */}
+      <Box sx={{ display: 'grid', gap: 2.5, gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))' }}>
         {children}
       </Box>
     </Paper>
@@ -158,7 +159,7 @@ export default function Perfil() {
       )}
 
       {perfil && (
-        <Box sx={{ display: 'grid', gap: 2.5, maxWidth: 860 }}>
+        <Box sx={{ display: 'grid', gap: 2.5 }}>
           <Paper variant="outlined" sx={{ p: 3, display: 'flex', alignItems: 'center', gap: 2.5, flexWrap: 'wrap' }}>
             <Avatar sx={{ width: 72, height: 72, bgcolor: colores.primario, fontSize: 26, fontWeight: 700 }}>
               {iniciales(perfil.nombreCompleto)}
@@ -178,26 +179,29 @@ export default function Perfil() {
             <Alert severity="info">Esta cuenta no tiene un empleado asociado, por eso no hay datos de trabajo.</Alert>
           )}
 
-          <Tarjeta titulo="Datos personales">
-            <Dato etiqueta="Número de empleado" valor={perfil.empleadoId} />
-            <Dato etiqueta="Usuario" valor={perfil.nombreUsuario} />
-            <Dato etiqueta="RFC" valor={perfil.rfc} />
-            <Dato etiqueta="CURP" valor={perfil.curp} />
-            <Dato etiqueta="NSS" valor={perfil.nss} />
-          </Tarjeta>
+          {/* Celular: una tarjeta debajo de otra. Tablet (md): dos columnas. Pantalla grande (xl): tres. */}
+          <Box sx={{ display: 'grid', gap: 2.5, alignItems: 'start', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', xl: 'repeat(3, 1fr)' } }}>
+            <Tarjeta titulo="Datos personales">
+              <Dato etiqueta="Número de empleado" valor={perfil.empleadoId} />
+              <Dato etiqueta="Usuario" valor={perfil.nombreUsuario} />
+              <Dato etiqueta="RFC" valor={perfil.rfc} />
+              <Dato etiqueta="CURP" valor={perfil.curp} />
+              <Dato etiqueta="NSS" valor={perfil.nss} />
+            </Tarjeta>
 
-          <Tarjeta titulo="Trabajo">
-            <Dato etiqueta="Empresa" valor={perfil.empresa} />
-            <Dato etiqueta="Departamento" valor={perfil.departamento} />
-            <Dato etiqueta="Turno" valor={perfil.turno} />
-            <Dato etiqueta="Sede" valor={perfil.sede} />
-            <Dato etiqueta="Fecha de ingreso" valor={perfil.fechaIngreso ? fechaCorta(perfil.fechaIngreso) : null} />
-          </Tarjeta>
+            <Tarjeta titulo="Trabajo">
+              <Dato etiqueta="Empresa" valor={perfil.empresa} />
+              <Dato etiqueta="Departamento" valor={perfil.departamento} />
+              <Dato etiqueta="Turno" valor={perfil.turno} />
+              <Dato etiqueta="Sede" valor={perfil.sede} />
+              <Dato etiqueta="Fecha de ingreso" valor={perfil.fechaIngreso ? fechaCorta(perfil.fechaIngreso) : null} />
+            </Tarjeta>
 
-          <Tarjeta titulo="Contacto">
-            <Dato etiqueta="Teléfono" valor={perfil.telefono} />
-            <Dato etiqueta="Correo" valor={perfil.correo} />
-          </Tarjeta>
+            <Tarjeta titulo="Contacto">
+              <Dato etiqueta="Teléfono" valor={perfil.telefono} />
+              <Dato etiqueta="Correo" valor={perfil.correo} />
+            </Tarjeta>
+          </Box>
         </Box>
       )}
 

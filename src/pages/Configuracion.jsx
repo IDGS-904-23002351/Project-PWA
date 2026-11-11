@@ -80,7 +80,7 @@ function FilaParametro({ parametro, alGuardar }) {
         error={Boolean(error)}
         helperText={error ?? `${info.ayuda} Última actualización: ${fechaHora(parametro.actualizadoEn)}`}
         slotProps={{ htmlInput: { inputMode: 'numeric' }, input: { endAdornment: <Typography color="text.secondary">{info.unidad}</Typography> } }}
-        sx={{ flex: 1, minWidth: 260 }}
+        sx={{ flex: 1, minWidth: 200 }}
       />
       <Button variant="contained" onClick={guardar} disabled={!cambio || guardando} sx={{ mt: 0.5 }}>
         {guardando ? 'Guardando…' : 'Guardar'}
@@ -133,10 +133,12 @@ export default function Configuracion() {
       )}
 
       {config && (
-        <Box sx={{ display: 'grid', gap: 2.5, maxWidth: 860 }}>
+        // Celular y tablet: una sección debajo de otra. Pantalla grande (lg): las dos lado a lado.
+        <Box sx={{ display: 'grid', gap: 2.5, alignItems: 'start', gridTemplateColumns: { xs: '1fr', lg: 'repeat(2, 1fr)' } }}>
           <Seccion icono={<ApartmentOutlinedIcon />} titulo="Datos de la empresa" descripcion="Empresa activa del sistema. Solo lectura.">
             {empresa ? (
-              <Box sx={{ display: 'grid', gap: 2.5, gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' } }}>
+              // Los campos se acomodan según el ancho de la tarjeta (mínimo 220 px cada uno)
+              <Box sx={{ display: 'grid', gap: 2.5, gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
                 <TextField label="Razón social" value={empresa.razonSocial} disabled />
                 <TextField label="Nombre comercial" value={empresa.nombreComercial ?? ''} disabled />
                 <TextField label="RFC" value={empresa.rfc} disabled />
