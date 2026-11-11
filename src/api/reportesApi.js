@@ -1,5 +1,5 @@
 // src/api/reportesApi.js
-const API_URL = import.meta.env.VITE_API_URL ?? 'https://localhost:7219'
+const API_URL = import.meta.env.VITE_API_URL
 
 async function peticion(ruta, opciones = {}) {
   let respuesta
