@@ -5,12 +5,13 @@ import {
   InputAdornment, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, Avatar, Chip, IconButton,
   Menu, Snackbar, Alert, Dialog, DialogTitle, DialogContent,
-  DialogContentText, DialogActions, CircularProgress, Tooltip,
+  DialogContentText, DialogActions, CircularProgress, Tooltip, Stack,
 } from '@mui/material'
 import { Search, Add, MoreVert } from '@mui/icons-material'
 import { empleadoApi } from '../api/empleadoApi'
 import EmpleadoModal from '../components/EmpleadoModal'
 import EmpleadoDetalleModal from '../components/EmpleadoDetalleModal'
+import EncabezadoPagina from '../components/EncabezadoPagina'
 
 export default function Empleados() {
   const [empleados, setEmpleados] = useState([])
@@ -48,7 +49,6 @@ export default function Empleados() {
 
   useEffect(() => {
     cargarEmpleados()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtroEstado])
 
   const handleKeyPress = (e) => {
@@ -72,7 +72,6 @@ export default function Empleados() {
     try {
       const data = await empleadoApi.obtener(id)
       const completo = data?.empleado ?? data ?? null
-      
       setEmpleadoSeleccionado(completo)
       setModalOpen(true)
     } catch (error) {
@@ -136,67 +135,67 @@ export default function Empleados() {
   }
 
   return (
-    <Box sx={{ p: 4, bgcolor: '#f8f9fa', minHeight: '100vh' }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Box>
-          <Typography variant="h4" fontWeight="bold" color="#1e293b">Empleados</Typography>
-          <Typography variant="body2" color="textSecondary">
-            Administra la información de los {empleados.length} colaboradores.
-          </Typography>
-        </Box><br/>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          onClick={abrirNuevo}
-          sx={{ bgcolor: '#00897b', '&:hover': { bgcolor: '#00695c' }, textTransform: 'none', borderRadius: 2 }}
-        >
-          Nuevo empleado
-        </Button>
-      </Box><br/>
+    <Box>
+      <EncabezadoPagina
+        titulo="Empleados"
+        descripcion={`Administra la información de los ${empleados.length} colaboradores.`}
+        acciones={
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={abrirNuevo}
+            color="primary"
+          >
+            Nuevo empleado
+          </Button>
+        }
+      />
 
-      <Paper sx={{ p: 1, mb: 3, display: 'flex', gap: 2, borderRadius: 3 }} elevation={0}>
-        <TextField
-          placeholder="Buscar por nombre o número..."
-          variant="outlined"
-          size="small"
-          fullWidth
-          value={buscar}
-          onChange={(e) => setBuscar(e.target.value)}
-          onKeyDown={handleKeyPress}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <Search color="action" />
-              </InputAdornment>
-            ),
-            sx: { borderRadius: 2, bgcolor: '#fff' },
-          }}
-        />
-        <Select size="small" defaultValue="todos" sx={{ minWidth: 180, borderRadius: 2 }}>
-          <MenuItem value="todos">Todos los departamentos</MenuItem>
-        </Select>
-        <Select size="small" defaultValue="todos" sx={{ minWidth: 150, borderRadius: 2 }}>
-          <MenuItem value="todos">Todos los tipos</MenuItem>
-          <MenuItem value="operativo">Operativo</MenuItem>
-        </Select>
-        <Select
-          size="small"
-          value={filtroEstado}
-          onChange={(e) => setFiltroEstado(e.target.value)}
-          sx={{ minWidth: 120, borderRadius: 2 }}
-        >
-          <MenuItem value="ACTIVO">Activos</MenuItem>
-          <MenuItem value="INACTIVO">Inactivos</MenuItem>
-          <MenuItem value="todos">Todos</MenuItem>
-        </Select>
+      {/* Barra de Filtros Responsiva */}
+      <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
+        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+          <TextField
+            placeholder="Buscar por nombre o número..."
+            size="small"
+            value={buscar}
+            onChange={(e) => setBuscar(e.target.value)}
+            onKeyDown={handleKeyPress}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search color="action" />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ flex: 1 }}
+          />
+          <Select size="small" defaultValue="todos" sx={{ minWidth: 180 }}>
+            <MenuItem value="todos">Todos los departamentos</MenuItem>
+          </Select>
+          <Select size="small" defaultValue="todos" sx={{ minWidth: 150 }}>
+            <MenuItem value="todos">Todos los tipos</MenuItem>
+            <MenuItem value="operativo">Operativo</MenuItem>
+          </Select>
+          <Select
+            size="small"
+            value={filtroEstado}
+            onChange={(e) => setFiltroEstado(e.target.value)}
+            sx={{ minWidth: 140 }}
+          >
+            <MenuItem value="ACTIVO">Activos</MenuItem>
+            <MenuItem value="INACTIVO">Inactivos</MenuItem>
+            <MenuItem value="todos">Todos</MenuItem>
+          </Select>
+        </Stack>
       </Paper>
 
-      <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 3 }}>
+      {/* Tabla de Empleados */}
+      <TableContainer component={Paper} variant="outlined">
         <Table sx={{ minWidth: 650 }}>
-          <TableHead sx={{ bgcolor: '#fff' }}>
+          <TableHead sx={{ bgcolor: 'background.default' }}>
             <TableRow>
               {['EMPLEADO', 'PUESTO', 'DEPARTAMENTO', 'TIPO', 'TURNO', 'ESTATUS'].map((h) => (
-                <TableCell key={h} sx={{ fontWeight: 'bold', color: '#64748b', fontSize: '0.75rem' }}>
+                <TableCell key={h} sx={{ fontWeight: 700, color: 'text.secondary', fontSize: '0.75rem' }}>
                   {h}
                 </TableCell>
               ))}
@@ -221,17 +220,15 @@ export default function Empleados() {
                 <Tooltip key={emp.id} title="Doble click para ver el detalle" placement="right" arrow>
                   <TableRow hover onDoubleClick={() => abrirDetalle(emp)} sx={{ cursor: 'pointer' }}>
                     <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
-                        <Box sx={{ flexShrink: 0 }}>
-                          <Avatar sx={{ bgcolor: '#e0f2f1', color: '#00897b', fontWeight: 'bold' }}>
-                            {getInitials(emp.persona_id?.nombre, emp.persona_id?.apellido_Paterno)}
-                          </Avatar>
-                        </Box>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
-                          <Typography variant="subtitle2" fontWeight="bold" color="#1e293b" noWrap>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Avatar sx={{ bgcolor: 'primary.light', color: 'primary.main', fontWeight: 'bold' }}>
+                          {getInitials(emp.persona_id?.nombre, emp.persona_id?.apellido_Paterno)}
+                        </Avatar>
+                        <Box>
+                          <Typography variant="subtitle2" fontWeight="bold" color="text.primary" noWrap>
                             {`${emp.persona_id?.nombre || ''} ${emp.persona_id?.apellido_Paterno || ''}`}
                           </Typography>
-                          <Typography variant="caption" color="textSecondary" noWrap>
+                          <Typography variant="caption" color="text.secondary" noWrap>
                             {emp.rfc || 'SIN RFC'}
                           </Typography>
                         </Box>
@@ -241,33 +238,26 @@ export default function Empleados() {
                       <Typography variant="body2">Colaborador</Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2">
-                        {emp.departamento_id?.nombre || 'N/A'}
-                      </Typography>
+                      <Typography variant="body2">{emp.departamento_id?.nombre || 'N/A'}</Typography>
                     </TableCell>
                     <TableCell>
                       <Chip
                         label={emp.turno_id?.nombre === 'Matutino' ? 'Operativo' : 'Administrativo'}
                         size="small"
-                        sx={{
-                          bgcolor: emp.turno_id?.nombre === 'Matutino' ? '#e0f2f1' : '#ede7f6',
-                          color: emp.turno_id?.nombre === 'Matutino' ? '#00796b' : '#5e35b1',
-                          fontWeight: 'bold',
-                        }}
+                        color={emp.turno_id?.nombre === 'Matutino' ? 'primary' : 'secondary'}
+                        variant="outlined"
                       />
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2">{emp.turno_id?.nombre || 'N/A'}</Typography>
                     </TableCell>
                     <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, lineHeight: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Box component="span" sx={{
-                          width: 8, height: 8, minWidth: 8, minHeight: 8,
-                          borderRadius: '50%', flexShrink: 0, display: 'inline-block',
-                          bgcolor: emp.estado === 'ACTIVO' ? '#4caf50' : '#9e9e9e',
+                          width: 8, height: 8, borderRadius: '50%',
+                          bgcolor: emp.estado === 'ACTIVO' ? 'success.main' : 'text.disabled',
                         }} />
-                        <Typography variant="body2" component="span" sx={{ lineHeight: 1 }}
-                          color={emp.estado === 'ACTIVO' ? '#4caf50' : '#757575'}>
+                        <Typography variant="body2" color={emp.estado === 'ACTIVO' ? 'success.main' : 'text.secondary'}>
                           {emp.estado === 'ACTIVO' ? 'Activo' : 'Inactivo'}
                         </Typography>
                       </Box>
@@ -285,12 +275,13 @@ export default function Empleados() {
         </Table>
       </TableContainer>
 
+      {/* Menú de acciones */}
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={cerrarMenu}>
         <MenuItem onClick={abrirEditar}>Editar</MenuItem>
         {empleadoMenu?.estado === 'INACTIVO' ? (
           <MenuItem onClick={() => handleReactivar(empleadoMenu)}>Reactivar</MenuItem>
         ) : (
-          <MenuItem onClick={abrirEliminar} sx={{ color: '#d32f2f' }}>
+          <MenuItem onClick={abrirEliminar} sx={{ color: 'error.main' }}>
             Eliminar
           </MenuItem>
         )}
@@ -309,6 +300,7 @@ export default function Empleados() {
         empleadoId={empleadoDetalleId}
       />
 
+      {/* Modal de confirmación de eliminación */}
       <Dialog open={Boolean(confirmDelete)} onClose={() => setConfirmDelete(null)} fullWidth maxWidth="xs">
         <DialogTitle>Eliminar empleado</DialogTitle>
         <DialogContent>
@@ -324,7 +316,7 @@ export default function Empleados() {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmDelete(null)} disabled={deleting}>Cancelar</Button>
+          <Button onClick={() => setConfirmDelete(null)} disabled={deleting} color="inherit">Cancelar</Button>
           <Button onClick={handleEliminar} color="error" variant="contained" disabled={deleting}>
             {deleting ? <CircularProgress size={20} color="inherit" /> : 'Eliminar'}
           </Button>
@@ -337,11 +329,7 @@ export default function Empleados() {
         onClose={() => setSnackbar({ ...snackbar, open: false })}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
-        <Alert
-          severity={snackbar.severity}
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          variant="filled"
-        >
+        <Alert severity={snackbar.severity} onClose={() => setSnackbar({ ...snackbar, open: false })} variant="filled">
           {snackbar.message}
         </Alert>
       </Snackbar>

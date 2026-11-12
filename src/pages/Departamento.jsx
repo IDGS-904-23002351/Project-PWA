@@ -1,13 +1,14 @@
-// src/pages/Departamentos.jsx
+// src/pages/Departamento.jsx
 import React, { useState, useEffect } from 'react';
 import { 
     Box, Typography, Button, TextField, InputAdornment, 
     Table, TableBody, TableCell, TableContainer, TableHead, 
     TableRow, Paper, IconButton, Chip, Alert, Dialog, 
-    DialogTitle, DialogContent, DialogActions, Tooltip 
+    DialogTitle, DialogContent, DialogActions, Tooltip, Stack 
 } from '@mui/material';
 import { Search, Add, Edit, Delete } from '@mui/icons-material';
 import { departamentoApi } from '../api/departamentoApi';
+import EncabezadoPagina from '../components/EncabezadoPagina';
 
 export default function Departamentos() {
     const [departamentos, setDepartamentos] = useState([]);
@@ -15,12 +16,10 @@ export default function Departamentos() {
     const [loading, setLoading] = useState(false);
     const [mensaje, setMensaje] = useState({ tipo: '', texto: '' });
 
-    // Estados para el Modal (Crear / Editar)
     const [openModal, setOpenModal] = useState(false);
     const [editando, setEditando] = useState(false);
     const [formDep, setFormDep] = useState({ id: 0, nombre: '', descripcion: '', estado: 'ACTIVO' });
 
-    // Cargar departamentos
     const cargarDepartamentos = async () => {
         setLoading(true);
         try {
@@ -35,21 +34,18 @@ export default function Departamentos() {
 
     useEffect(() => { cargarDepartamentos(); }, []);
 
-    // Abrir Modal para Crear
     const abrirNuevo = () => {
         setEditando(false);
         setFormDep({ id: 0, nombre: '', descripcion: '', estado: 'ACTIVO' });
         setOpenModal(true);
     };
 
-    // Abrir Modal para Editar
     const abrirEditar = (dep) => {
         setEditando(true);
         setFormDep({ id: dep.id, nombre: dep.nombre || '', descripcion: dep.descripcion || '', estado: dep.estado || 'ACTIVO' });
         setOpenModal(true);
     };
 
-    // Guardar o Actualizar
     const handleSubmit = async (e) => {
         e.preventDefault();
         setMensaje({ tipo: '', texto: '' });
@@ -68,7 +64,6 @@ export default function Departamentos() {
         }
     };
 
-    // Eliminar Departamento
     const handleEliminar = async (id) => {
         if (!window.confirm('¿Estás seguro de eliminar este departamento?')) return;
         setMensaje({ tipo: '', texto: '' });
@@ -81,39 +76,32 @@ export default function Departamentos() {
         }
     };
 
-    // Filtrar localmente
     const departamentosFiltrados = departamentos.filter((dep) => 
         dep.nombre?.toLowerCase().includes(buscar.toLowerCase()) ||
         dep.descripcion?.toLowerCase().includes(buscar.toLowerCase())
     );
 
     return (
-        <Box sx={{ p: 4, bgcolor: '#f8f9fa', minHeight: '100vh' }}>
-            {/* Header */}
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                <Box>
-                    <Typography variant="h4" fontWeight="bold" color="#1e293b">Departamentos</Typography>
-                    <Typography variant="body2" color="textSecondary">
-                        Administra la información de los {departamentos.length} departamentos de la organización.
-                    </Typography>
-                </Box>
-                <Button 
-                    variant="contained" 
-                    startIcon={<Add />} 
-                    onClick={abrirNuevo}
-                    sx={{ bgcolor: '#00897b', '&:hover': { bgcolor: '#00695c' }, textTransform: 'none', borderRadius: 2 }}
-                >
-                    Nuevo departamento
-                </Button>
-            </Box>
+        <Box>
+            <EncabezadoPagina
+                titulo="Departamentos"
+                descripcion={`Administra la información de los ${departamentos.length} departamentos de la organización.`}
+                acciones={
+                    <Button 
+                        variant="contained" 
+                        startIcon={<Add />} 
+                        onClick={abrirNuevo}
+                    >
+                        Nuevo departamento
+                    </Button>
+                }
+            />
 
             {mensaje.texto && <Alert severity={mensaje.tipo} sx={{ mb: 3 }}>{mensaje.texto}</Alert>}
 
-            {/* Barra de Búsqueda */}
-            <Paper sx={{ p: 1, mb: 3, display: 'flex', gap: 2, borderRadius: 3 }} elevation={0}>
+            <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
                 <TextField
                     placeholder="Buscar por nombre o descripción..."
-                    variant="outlined"
                     size="small"
                     fullWidth
                     value={buscar}
@@ -124,32 +112,30 @@ export default function Departamentos() {
                                 <Search color="action" />
                             </InputAdornment>
                         ),
-                        sx: { borderRadius: 2, bgcolor: '#fff' }
                     }}
                 />
             </Paper>
 
-            {/* Tabla de Departamentos */}
-            <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 3 }}>
+            <TableContainer component={Paper} variant="outlined">
                 <Table sx={{ minWidth: 650 }}>
-                    <TableHead sx={{ bgcolor: '#fff' }}>
+                    <TableHead sx={{ bgcolor: 'background.default' }}>
                         <TableRow>
-                            <TableCell sx={{ fontWeight: 'bold', color: '#64748b', fontSize: '0.75rem' }}>NOMBRE</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold', color: '#64748b', fontSize: '0.75rem' }}>DESCRIPCIÓN</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold', color: '#64748b', fontSize: '0.75rem' }}>ESTATUS</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 'bold', color: '#64748b', fontSize: '0.75rem' }}>ACCIONES</TableCell>
+                            <TableCell sx={{ fontWeight: 700, color: 'text.secondary', fontSize: '0.75rem' }}>NOMBRE</TableCell>
+                            <TableCell sx={{ fontWeight: 700, color: 'text.secondary', fontSize: '0.75rem' }}>DESCRIPCIÓN</TableCell>
+                            <TableCell sx={{ fontWeight: 700, color: 'text.secondary', fontSize: '0.75rem' }}>ESTATUS</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 700, color: 'text.secondary', fontSize: '0.75rem' }}>ACCIONES</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {departamentosFiltrados.map((dep) => (
                             <TableRow key={dep.id} hover>
                                 <TableCell>
-                                    <Typography variant="subtitle2" fontWeight="bold" color="#1e293b">
+                                    <Typography variant="subtitle2" fontWeight="bold" color="text.primary">
                                         {dep.nombre}
                                     </Typography>
                                 </TableCell>
                                 <TableCell>
-                                    <Typography variant="body2" color="textSecondary">
+                                    <Typography variant="body2" color="text.secondary">
                                         {dep.descripcion || 'Sin descripción'}
                                     </Typography>
                                 </TableCell>
@@ -157,11 +143,8 @@ export default function Departamentos() {
                                     <Chip 
                                         label={dep.estado || 'ACTIVO'} 
                                         size="small" 
-                                        sx={{ 
-                                            bgcolor: (dep.estado || 'ACTIVO') === 'ACTIVO' ? '#e0f2f1' : '#ffebee', 
-                                            color: (dep.estado || 'ACTIVO') === 'ACTIVO' ? '#00796b' : '#c62828',
-                                            fontWeight: 'bold'
-                                        }} 
+                                        color={(dep.estado || 'ACTIVO') === 'ACTIVO' ? 'success' : 'error'}
+                                        variant="outlined"
                                     />
                                 </TableCell>
                                 <TableCell align="right">
@@ -180,8 +163,8 @@ export default function Departamentos() {
                         ))}
                         {departamentosFiltrados.length === 0 && !loading && (
                             <TableRow>
-                                <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
-                                    <Typography variant="body2" color="textSecondary">
+                                <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
+                                    <Typography variant="body2" color="text.secondary">
                                         No se encontraron departamentos.
                                     </Typography>
                                 </TableCell>
@@ -191,18 +174,16 @@ export default function Departamentos() {
                 </Table>
             </TableContainer>
 
-            {/* Modal para Crear / Editar */}
             <Dialog open={openModal} onClose={() => setOpenModal(false)} maxWidth="sm" fullWidth>
-                <DialogTitle sx={{ fontWeight: 'bold', color: '#1e293b' }}>
+                <DialogTitle sx={{ fontWeight: 'bold' }}>
                     {editando ? 'Editar Departamento' : 'Registrar Nuevo Departamento'}
                 </DialogTitle>
                 <Box component="form" onSubmit={handleSubmit}>
                     <DialogContent dividers>
-                        <Box display="flex" flexDirection="column" gap={2.5}>
+                        <Stack spacing={2.5}>
                             <TextField 
                                 label="Nombre del Departamento" 
                                 size="small" 
-                                fullWidth 
                                 required 
                                 value={formDep.nombre} 
                                 onChange={(e) => setFormDep({ ...formDep, nombre: e.target.value })} 
@@ -210,19 +191,18 @@ export default function Departamentos() {
                             <TextField 
                                 label="Descripción" 
                                 size="small" 
-                                fullWidth 
                                 multiline 
                                 rows={3} 
                                 value={formDep.descripcion} 
                                 onChange={(e) => setFormDep({ ...formDep, descripcion: e.target.value })} 
                             />
-                        </Box>
+                        </Stack>
                     </DialogContent>
                     <DialogActions sx={{ p: 2 }}>
-                        <Button onClick={() => setOpenModal(false)} color="inherit" sx={{ textTransform: 'none', borderRadius: 2 }}>
+                        <Button onClick={() => setOpenModal(false)} color="inherit">
                             Cancelar
                         </Button>
-                        <Button type="submit" variant="contained" sx={{ bgcolor: '#00897b', '&:hover': { bgcolor: '#00695c' }, textTransform: 'none', borderRadius: 2 }}>
+                        <Button type="submit" variant="contained" color="primary">
                             {editando ? 'Actualizar' : 'Guardar'}
                         </Button>
                     </DialogActions>
