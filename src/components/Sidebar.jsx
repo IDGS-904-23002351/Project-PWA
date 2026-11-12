@@ -13,7 +13,7 @@ import BarChartIcon from '@mui/icons-material/BarChart'
 import SettingsIcon from '@mui/icons-material/Settings'
 import HistoryIcon from '@mui/icons-material/History'
 import { useAuth } from '../context/AuthContext'
-import { obtenerMenuUsuario } from '../api/inicioApi.js';
+import { obtenerMenuUsuario } from '../api/inicioApi.js'
 
 const ICONOS_MAP = {
   Inicio: <HomeIcon />,
@@ -29,6 +29,20 @@ const ICONOS_MAP = {
   Bitácora: <HistoryIcon />,
 }
 
+const MENU_COMPLETO_FALLBACK = [
+  { id: 1, nombre: 'Inicio', ruta: '/inicio' },
+  { id: 2, nombre: 'Empleados', ruta: '/empleados' },
+  { id: 3, nombre: 'Departamentos y cargos', ruta: '/departamentos' },
+  { id: 4, nombre: 'Planta y QR', ruta: '/planta-qr' },
+  { id: 5, nombre: 'Turnos', ruta: '/turnos' },
+  { id: 6, nombre: 'Asistencias', ruta: '/asistencias' },
+  { id: 7, nombre: 'Solicitudes', ruta: '/solicitudes' },
+  { id: 8, nombre: 'Nómina', ruta: '/nomina' },
+  { id: 9, nombre: 'Reportes', ruta: '/reportes' },
+  { id: 10, nombre: 'Bitácora', ruta: '/bitacora' },
+  { id: 11, nombre: 'Configuración', ruta: '/configuracion' },
+]
+
 export default function Sidebar() {
   const { sesion } = useAuth()
   const location = useLocation()
@@ -36,19 +50,13 @@ export default function Sidebar() {
 
   useEffect(() => {
     async function cargarMenu() {
-      if (sesion?.usuario?.id) {
+      if (sesion?.usuario?.id && sesion?.token) {
         try {
-          const menuData = await obtenerMenuUsuario(sesion.usuario.id, sesion.token)
-          setOpcionesMenu(menuData)
+          const menuData = await obtenerMenuUsuario(sesion.token, sesion.usuario.id)
+          setOpcionesMenu(Array.isArray(menuData) && menuData.length > 0 ? menuData : MENU_COMPLETO_FALLBACK)
         } catch (error) {
-          console.error("Error al obtener menú dinámico:", error)
-          // Fallback completo si la API falla temporalmente
-          setOpcionesMenu([
-            { id: 1, nombre: 'Inicio', ruta: '/inicio' },
-            { id: 2, nombre: 'Empleados', ruta: '/empleados' },
-            { id: 3, nombre: 'Asistencias', ruta: '/asistencias' },
-            { id: 4, nombre: 'Solicitudes', ruta: '/solicitudes' },
-          ])
+          console.error('Error al obtener menú dinámico:', error)
+          setOpcionesMenu(MENU_COMPLETO_FALLBACK)
         }
       }
     }
@@ -62,7 +70,6 @@ export default function Sidebar() {
         flexShrink: 0,
         bgcolor: '#0b132b',
         color: 'white',
-        // Fijo al alto de la ventana: no se estira cuando la página es larga
         position: 'sticky',
         top: 0,
         height: '100vh',
@@ -75,7 +82,6 @@ export default function Sidebar() {
       }}
     >
       <Box>
-        {/* Logotipo con la N y Nomi */}
         <Box sx={{ px: 2, py: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Box
             sx={{
@@ -89,7 +95,7 @@ export default function Sidebar() {
               fontWeight: 900,
               fontSize: '1.2rem',
               color: 'white',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+              boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
             }}
           >
             N
@@ -104,7 +110,6 @@ export default function Sidebar() {
           </Box>
         </Box>
 
-        {/* Lista del Menú */}
         <List component="nav" sx={{ mt: 1 }}>
           {opcionesMenu.map((item) => {
             const rutaLimpia = item.ruta?.startsWith('/') ? item.ruta : `/${item.ruta || ''}`
@@ -123,7 +128,7 @@ export default function Sidebar() {
                       color: 'white',
                       '&:hover': { bgcolor: '#115e59' },
                     },
-                    '&:hover': { bgcolor: 'rgba(255,255,255,0.05)' }
+                    '&:hover': { bgcolor: 'rgba(255,255,255,0.05)' },
                   }}
                 >
                   <ListItemIcon sx={{ color: 'white', minWidth: 36 }}>
