@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'logo-nomi.png', 'logo-nomi-blanco.png', 'isotipo-nomi.png'],
+      includeAssets: ['logo-nomi.png', 'logo-nomi-blanco.png', 'isotipo-nomi.png'],
       manifest: {
         name: 'Nomi - Asistencia y nómina',
         short_name: 'Nomi',
