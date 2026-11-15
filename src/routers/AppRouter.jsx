@@ -16,6 +16,8 @@ import Turno from '../pages/TurnosPage'
 import Nomina from '../pages/Nomina'
 import Reportes from '../pages/Reportes'
 
+// Los empleados consultan su asistencia, recibos y solicitudes en la app móvil.
+// En la web, las pantallas con datos de todo el personal son solo para ADMIN y RRHH.
 export default function AppRouter() {
   return (
     <Routes>
@@ -28,8 +30,8 @@ export default function AppRouter() {
           <Route path="departamentos" element={<RutaPorRol roles={['ADMIN', 'RRHH']}><Departamentos /></RutaPorRol>} />
           <Route path="turnos" element={<RutaPorRol roles={['ADMIN', 'RRHH']}><Turno /></RutaPorRol>} />
           <Route path="empleados" element={<RutaPorRol roles={['ADMIN', 'RRHH']}><Empleados /></RutaPorRol>} />
-          <Route path="asistencias" element={<Asistencias />} />
-          <Route path="solicitudes" element={<Solicitudes />} />
+          <Route path="asistencias" element={<RutaPorRol roles={['ADMIN', 'RRHH']}><Asistencias /></RutaPorRol>} />
+          <Route path="solicitudes" element={<RutaPorRol roles={['ADMIN', 'RRHH']}><Solicitudes /></RutaPorRol>} />
           <Route path="perfil" element={<Perfil />} />
           <Route path="nomina" element={<RutaPorRol roles={['ADMIN', 'RRHH']}><Nomina /></RutaPorRol>} />
           <Route path="reportes" element={<RutaPorRol roles={['ADMIN', 'RRHH']}><Reportes /></RutaPorRol>} />
