@@ -12,9 +12,11 @@ import DeleteIcon from '@mui/icons-material/Delete'
 import { turnoApi } from '../api/turnoApi'
 import CrearTurnoModal from '../components/CrearTurnoModal'
 import CambiarTurnoModal from '../components/CambiarTurnoModal'
+import EncabezadoPagina from '../components/EncabezadoPagina'
 
 const COLORS = {
-  primary: '#009688',
+  primary: '#0f766e',
+  primaryHover: '#115e59',
   textMain: '#1a202c',
   textSecondary: '#718096',
   border: '#e2e8f0',
@@ -103,17 +105,16 @@ export default function TurnosPage() {
   }
 
   return (
-    <Box sx={{ p: { xs: 2, md: 4 }, bgcolor: '#fff', minHeight: '100vh' }}>
-      {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 4 }}>
-        <Box>
-          <Typography variant="h4" fontWeight="bold" color={COLORS.textMain}>Turnos</Typography>
-          <Typography variant="body1" color="textSecondary" sx={{ mt: 0.5 }}>Gestiona horarios y asignaciones del personal.</Typography>
-        </Box>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={() => setModalCrearOpen(true)} sx={{ bgcolor: COLORS.primary, '&:hover': { bgcolor: '#00796b' }, textTransform: 'none', borderRadius: 1, px: 2, py: 1, fontWeight: 600 }}>
-          Nuevo turno
-        </Button>
-      </Box>
+    <Box sx={{ width: '100%', boxSizing: 'border-box', pb: 4 }}>
+      <EncabezadoPagina
+        titulo="Turnos"
+        descripcion="Gestiona horarios y asignaciones del personal."
+        acciones={
+          <Button variant="contained" startIcon={<AddIcon />} onClick={() => setModalCrearOpen(true)} sx={{ bgcolor: COLORS.primary, '&:hover': { bgcolor: COLORS.primaryHover }, textTransform: 'none', borderRadius: 2, px: 2.5, fontWeight: 600 }}>
+            Nuevo turno
+          </Button>
+        }
+      />
 
       {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 

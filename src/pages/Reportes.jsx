@@ -8,6 +8,7 @@ import {
 } from '@mui/material';
 import { Download, CheckCircle, AccessTime, History, Description } from '@mui/icons-material';
 import { reportesApi } from '../api/reportesApi';
+import EncabezadoPagina from '../components/EncabezadoPagina';
 
 export default function Reportes() {
   // Estados de los filtros
@@ -192,25 +193,21 @@ export default function Reportes() {
   };
 
   return (
-    <Box sx={{ p: 4, bgcolor: '#f8f9fa', minHeight: '100vh' }}>
-      
-      {/* Encabezado */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Box>
-          <Typography variant="h4" fontWeight="bold" color="#1e293b">Reportes</Typography>
-          <Typography variant="body2" color="textSecondary">
-            Consulta y exporta información de tu operación.
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button variant="outlined" startIcon={<Download />} sx={{ textTransform: 'none', borderRadius: 2, color: '#64748b', borderColor: '#cbd5e1' }}>
-            PDF
-          </Button>
-          <Button variant="outlined" startIcon={<Download />} sx={{ textTransform: 'none', borderRadius: 2, color: '#64748b', borderColor: '#cbd5e1' }}>
-            Excel
-          </Button>
-        </Box>
-      </Box>
+    <Box sx={{ width: '100%', boxSizing: 'border-box', pb: 4 }}>
+      <EncabezadoPagina
+        titulo="Reportes"
+        descripcion="Consulta y exporta información de tu operación."
+        acciones={
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button variant="outlined" startIcon={<Download />} sx={{ textTransform: 'none', borderRadius: 2, color: '#64748b', borderColor: '#cbd5e1' }}>
+              PDF
+            </Button>
+            <Button variant="outlined" startIcon={<Download />} sx={{ textTransform: 'none', borderRadius: 2, color: '#64748b', borderColor: '#cbd5e1' }}>
+              Excel
+            </Button>
+          </Box>
+        }
+      />
 
       {/* Tarjetas Seleccionables */}
       <Grid container spacing={2} mb={3}>

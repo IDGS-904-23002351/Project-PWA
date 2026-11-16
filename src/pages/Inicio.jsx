@@ -5,6 +5,7 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { obtenerMetricasDashboard } from '../api/inicioApi'
+import EncabezadoPagina from '../components/EncabezadoPagina'
 
 export default function Inicio() {
   const { sesion } = useAuth()
@@ -60,43 +61,33 @@ Solicitudes Pendientes,${metricas.solicitudesPendientes ?? 0}`
 
   return (
     <Box sx={{ width: '100%', boxSizing: 'border-box', pb: 4 }}>
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row' },
-          justifyContent: 'space-between',
-          alignItems: { xs: 'flex-start', sm: 'center' },
-          gap: 2,
-          mb: 3,
-          width: '100%',
-        }}
-      >
-        <Box>
-          <Typography variant="h4" sx={{ fontWeight: 700, color: '#1e293b', fontSize: { xs: '1.5rem', md: '2rem' } }}>
-            Buenos días, {sesion?.usuario?.nombre || 'Usuario'}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
+      <EncabezadoPagina
+        titulo={`Buenos días, ${sesion?.usuario?.nombre || 'Usuario'}`}
+        descripcion={
+          <>
             Aquí tienes el resumen de Calzado Alba para hoy, <span style={{ textTransform: 'capitalize' }}>{fechaFormateada}</span>.
-          </Typography>
-        </Box>
-        <Button
-          variant="outlined"
-          startIcon={<DownloadIcon />}
-          onClick={handleDescargarReporte}
-          disabled={!metricas}
-          sx={{
-            textTransform: 'none',
-            borderRadius: 2,
-            borderColor: '#cbd5e1',
-            color: '#334155',
-            bgcolor: 'white',
-            flexShrink: 0,
-            '&:hover': { bgcolor: '#f8fafc', borderColor: '#94a3b8' },
-          }}
-        >
-          Descargar reporte
-        </Button>
-      </Box>
+          </>
+        }
+        acciones={
+            <Button
+              variant="outlined"
+              startIcon={<DownloadIcon />}
+              onClick={handleDescargarReporte}
+              disabled={!metricas}
+              sx={{
+                textTransform: 'none',
+                borderRadius: 2,
+                borderColor: '#cbd5e1',
+                color: '#334155',
+                bgcolor: 'white',
+                flexShrink: 0,
+                '&:hover': { bgcolor: '#f8fafc', borderColor: '#94a3b8' },
+              }}
+            >
+              Descargar reporte
+            </Button>
+        }
+      />
 
       {cargando && <CircularProgress sx={{ display: 'block', mx: 'auto', my: 4, color: '#0f766e' }} />}
       {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
@@ -143,7 +134,7 @@ Solicitudes Pendientes,${metricas.solicitudesPendientes ?? 0}`
 
             <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3, bgcolor: 'white' }}>
               <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>SOLICITUDES</Typography>
-              <Typography variant="h4" sx={{ fontWeight: 700, mt: 1, color: '#0284c7' }}>{metricas.solicitudesPendientes ?? 0}</Typography>
+              <Typography variant="h4" sx={{ fontWeight: 700, mt: 1, color: 'secondary.main' }}>{metricas.solicitudesPendientes ?? 0}</Typography>
               <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>Pendientes de revisión</Typography>
             </Paper>
           </Box>

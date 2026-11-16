@@ -4,6 +4,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import CancelIcon from '@mui/icons-material/Cancel'
 import { useAuth } from '../context/AuthContext'
 import { obtenerSolicitudes, actualizarEstadoSolicitud } from '../api/solicitudApi'
+import EncabezadoPagina from '../components/EncabezadoPagina'
 
 export default function Solicitudes() {
   const { sesion } = useAuth()
@@ -65,14 +66,10 @@ export default function Solicitudes() {
 
   return (
     <Box sx={{ width: '100%', boxSizing: 'border-box', pb: 4 }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ fontWeight: 700, color: '#1e293b', fontSize: { xs: '1.5rem', md: '2rem' } }}>
-          Solicitudes
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Revisa y responde las solicitudes enviadas al sistema.
-        </Typography>
-      </Box>
+      <EncabezadoPagina
+        titulo="Solicitudes"
+        descripcion="Revisa y responde las solicitudes enviadas al sistema."
+      />
 
       <Paper variant="outlined" sx={{ mb: 3, borderRadius: 2.5, display: 'inline-flex', bgcolor: 'white', overflow: 'hidden' }}>
         <Tabs

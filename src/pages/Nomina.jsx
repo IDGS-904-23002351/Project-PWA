@@ -8,6 +8,7 @@ import {
 } from '@mui/material';
 import { Search, Add, Lock, ReceiptLong, Calculate } from '@mui/icons-material';
 import { nominaApi } from '../api/nominaApi';
+import EncabezadoPagina from '../components/EncabezadoPagina';
 
 export default function Nomina() {
     const [tabActiva, setTabActiva] = useState(0);
@@ -113,8 +114,11 @@ export default function Nomina() {
     const periodosFiltrados = periodos.filter(p => p.nombre?.toLowerCase().includes(buscarPeriodo.toLowerCase()) || p.estado?.toLowerCase().includes(buscarPeriodo.toLowerCase()));
 
     return (
-        <Box sx={{ p: 4, bgcolor: '#f8f9fa', minHeight: '100vh' }}>
-            <Typography variant="h4" fontWeight="bold" color="#1e293b" mb={1}>Módulo de Nómina</Typography>
+        <Box sx={{ width: '100%', boxSizing: 'border-box', pb: 4 }}>
+            <EncabezadoPagina
+                titulo="Nómina"
+                descripcion="Genera periodos, calcula la nómina y consulta los recibos del personal."
+            />
             {mensaje.texto && <Alert severity={mensaje.tipo} sx={{ mb: 3 }}>{mensaje.texto}</Alert>}
 
             <Paper sx={{ mb: 3, borderRadius: 2 }} elevation={0}>
@@ -189,7 +193,7 @@ export default function Nomina() {
                             startIcon={<Calculate />}
                             onClick={handleCalcularNominaPeriodo}
                             sx={{ 
-                                bgcolor: esPeriodoCerrado ? undefined : '#1e3a8a', 
+                                bgcolor: esPeriodoCerrado ? undefined : 'primary.main', 
                                 '&:hover': { bgcolor: '#1e40af' }, 
                                 textTransform: 'none', 
                                 borderRadius: 2 

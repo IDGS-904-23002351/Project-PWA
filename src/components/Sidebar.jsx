@@ -87,7 +87,7 @@ export default function Sidebar() {
             sx={{
               width: 32,
               height: 32,
-              bgcolor: '#0284c7',
+              bgcolor: '#0f766e',
               borderRadius: 1,
               display: 'flex',
               alignItems: 'center',

@@ -5,6 +5,7 @@ import {
 } from '@mui/material'
 import FileDownloadIcon from '@mui/icons-material/FileDownload'
 import { obtenerAsistencias } from '../api/asistenciaApi'
+import EncabezadoPagina from '../components/EncabezadoPagina'
 
 export default function Asistencias() {
   const [asistencias, setAsistencias] = useState([])
@@ -96,16 +97,16 @@ export default function Asistencias() {
   })
 
   return (
-    <Box sx={{ maxWidth: 1300, margin: '0 auto', pb: 4 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Box>
-          <Typography variant="h4" sx={{ fontWeight: 700, color: '#111827' }}>Asistencias</Typography>
-          <Typography variant="body2" color="text.secondary">Registros en tiempo real cargados desde el servidor.</Typography>
-        </Box>
-        <Button variant="outlined" startIcon={<FileDownloadIcon />} onClick={handleExportarExcel} sx={{ textTransform: 'none', borderRadius: 2, bgcolor: 'white' }}>
-          Exportar Excel
-        </Button>
-      </Box>
+    <Box sx={{ width: '100%', boxSizing: 'border-box', pb: 4 }}>
+      <EncabezadoPagina
+        titulo="Asistencias"
+        descripcion="Registros en tiempo real cargados desde el servidor."
+        acciones={
+          <Button variant="outlined" startIcon={<FileDownloadIcon />} onClick={handleExportarExcel} sx={{ textTransform: 'none', borderRadius: 2, bgcolor: 'white' }}>
+            Exportar Excel
+          </Button>
+        }
+      />
 
       <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
         <TextField size="small" type="date" defaultValue={new Date().toISOString().split('T')[0]} sx={{ width: 170, bgcolor: 'white', borderRadius: 2 }} />
@@ -164,7 +165,7 @@ export default function Asistencias() {
                         <Chip label={item.estado || 'Puntual'} size="small" sx={{ bgcolor: est.bg, color: est.color, fontWeight: 600 }} />
                       </TableCell>
                       <TableCell align="right">
-                        <Typography variant="body2" sx={{ color: '#0284c7', fontWeight: 600, '&:hover': { textDecoration: 'underline' } }}>
+                        <Typography variant="body2" sx={{ color: 'primary.main', fontWeight: 600, '&:hover': { textDecoration: 'underline' } }}>
                           Corregir
                         </Typography>
                       </TableCell>

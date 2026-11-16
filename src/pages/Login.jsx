@@ -50,7 +50,7 @@ export default function Login() {
           textAlign: 'center',
           color: '#fff',
           p: 6,
-          background: 'linear-gradient(145deg, #1E3A8A 0%, #1E5FA8 55%, #0EA5E9 100%)',
+          background: 'linear-gradient(145deg, #115E59 0%, #0F766E 55%, #14B8A6 100%)',
         }}
       >
         <Box component="img" src="/logo-nomi-blanco.png" alt="Nomi" sx={{ width: 260, maxWidth: '70%', mb: 4 }} />

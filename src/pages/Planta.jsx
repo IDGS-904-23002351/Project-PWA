@@ -8,6 +8,7 @@ import {
 } from '@mui/material';
 import { LocationOn, Event, Save, Refresh, Add, Edit, Delete } from '@mui/icons-material';
 import { plantaQrApi } from '../api/plantaQrApi';
+import EncabezadoPagina from '../components/EncabezadoPagina';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 
@@ -145,11 +146,11 @@ export default function Planta() {
     const lngDef = parseFloat(ubicacion.longitud) || -101.683333;
 
     return (
-        <Box sx={{ p: 4, bgcolor: '#f8f9fa', minHeight: '100vh', width: '100%', boxSizing: 'border-box' }}>
-            <Box mb={3}>
-                <Typography variant="h4" fontWeight="bold" color="#1e293b">Planta y Geolocalización QR</Typography>
-                <Typography variant="body2" color="textSecondary">Administra sede física, GPS y códigos QR.</Typography>
-            </Box>
+        <Box sx={{ width: '100%', boxSizing: 'border-box', pb: 4 }}>
+            <EncabezadoPagina
+                titulo="Planta y Geolocalización QR"
+                descripcion="Administra sede física, GPS y códigos QR."
+            />
 
             {mensaje.texto && <Alert severity={mensaje.tipo} sx={{ mb: 3 }}>{mensaje.texto}</Alert>}
 

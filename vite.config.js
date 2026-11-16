@@ -13,7 +13,7 @@ export default defineConfig({
         short_name: 'Nomi',
         description: 'Control de asistencia y nómina para Calzado Alba',
         lang: 'es-MX',
-        theme_color: '#1E3A8A',
+        theme_color: '#0F766E',
         background_color: '#F8FAFC',
         display: 'standalone',
         start_url: '/',

@@ -1,10 +1,12 @@
 import { createTheme } from '@mui/material/styles'
 
-// Colores de la marca Nomi (tomados del logo).
+// Colores de la marca Nomi (verde azulado, igual que el Figma y la app móvil).
 // Si cambian, solo se editan aquí.
 export const colores = {
-  primario: '#1E3A8A', // azul marino
-  secundario: '#0EA5E9', // azul cielo
+  primario: '#0F766E', // verde azulado (teal)
+  primarioOscuro: '#115E59', // hover de botones
+  primarioClaro: '#CCFBF1', // fondos suaves y chips
+  secundario: '#0284C7', // azul para datos informativos
   exito: '#10B981', // verde
   error: '#EF4444',
   fondo: '#F8FAFC',
@@ -14,7 +16,7 @@ export const colores = {
 
 const theme = createTheme({
   palette: {
-    primary: { main: colores.primario },
+    primary: { main: colores.primario, dark: colores.primarioOscuro, light: colores.primarioClaro },
     secondary: { main: colores.secundario },
     success: { main: colores.exito },
     error: { main: colores.error },
