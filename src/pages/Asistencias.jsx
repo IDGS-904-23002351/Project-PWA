@@ -4,16 +4,19 @@ import {
   TableHead, TableRow, Button, Chip, TextField, MenuItem, Drawer, Avatar, Alert, CircularProgress
 } from '@mui/material'
 import FileDownloadIcon from '@mui/icons-material/FileDownload'
-import { obtenerAsistencias } from '../api/asistenciaApi'
+import { obtenerAsistencias, corregirAsistencia } from '../api/asistenciaApi' // 👈 Importamos corregirAsistencia
+import { useAuth } from '../context/AuthContext' // 👈 Importamos AuthContext
 import EncabezadoPagina from '../components/EncabezadoPagina'
 
 export default function Asistencias() {
+  const { sesion } = useAuth()
+  const token = sesion?.token // 👈 Obtenemos el token
+
   const [asistencias, setAsistencias] = useState([])
   const [seleccionado, setSeleccionado] = useState(null)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
   const [filtroEstado, setFiltroEstado] = useState('todos')
-  const [filtroDepto, setFiltroDepto] = useState('todos')
   
   const [horaEntradaEdit, setHoraEntradaEdit] = useState('')
   const [estadoEdit, setEstadoEdit] = useState('')
@@ -21,10 +24,11 @@ export default function Asistencias() {
   const [guardando, setGuardando] = useState(false)
 
   const cargarDatos = async () => {
+    if (!token) return; // Si no hay token, no hace la petición
     try {
       setCargando(true)
       setError(null)
-      const data = await obtenerAsistencias()
+      const data = await obtenerAsistencias(token) // 👈 Le pasamos el token
       setAsistencias(data || [])
     } catch (e) {
       setError(e.message || 'Error al obtener asistencias desde el servidor.')
@@ -35,7 +39,7 @@ export default function Asistencias() {
 
   useEffect(() => {
     cargarDatos()
-  }, [])
+  }, [token]) // 👈 Se ejecuta cuando el token esté listo
 
   const handleAbrirDrawer = (item) => {
     setSeleccionado(item)
@@ -51,14 +55,15 @@ export default function Asistencias() {
     }
     try {
       setGuardando(true)
-      await asistenciaApi.corregirAsistencia(seleccionado.id, {
+      // 👈 Corregido: antes tenías 'asistenciaApi.corregirAsistencia', ahora es directo
+      await corregirAsistencia(token, seleccionado.id, {
         horaEntrada: horaEntradaEdit,
         estado: estadoEdit,
         motivoCorreccion: motivoCorreccion
       })
       alert(`Corrección guardada con éxito en el servidor.`)
       setSeleccionado(null)
-      cargarDatos() // Recargar datos frescos del backend
+      cargarDatos() 
     } catch (e) {
       alert("Error al guardar la corrección en el backend: " + e.message)
     } finally {
@@ -144,7 +149,8 @@ export default function Asistencias() {
                 </TableRow>
               ) : (
                 asistenciasFiltradas.map((item) => {
-                  const nombre = item.empleadoNombre || item.nombre || `Empleado #${item.empleadoId || item.id}`
+                  // 👈 Buscamos el nombre de forma flexible como en Turnos
+                  const nombre = item.empleadoNombre || item.nombre || item.empleado?.persona_id?.nombre || `Empleado #${item.empleadoId || item.id}`
                   const iniciales = nombre.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase()
                   const est = getColorEstado(item.estado)
                   return (
@@ -157,8 +163,9 @@ export default function Asistencias() {
                           {nombre}
                         </Typography>
                       </TableCell>
-                      <TableCell>{item.horaEntrada || '--'}</TableCell>
-                      <TableCell>{item.horaSalida || '--'}</TableCell>
+                      {/* 👈 Mostramos solo la hora formateada, no la fecha completa */}
+                      <TableCell>{item.horaEntrada ? item.horaEntrada.split('T')[1]?.substring(0,8) : '--'}</TableCell>
+                      <TableCell>{item.horaSalida ? item.horaSalida.split('T')[1]?.substring(0,8) : '--'}</TableCell>
                       <TableCell>{item.retardo || '0 min'}</TableCell>
                       <TableCell>{item.metodo || 'GPS'}</TableCell>
                       <TableCell>
@@ -190,7 +197,7 @@ export default function Asistencias() {
             </Paper>
 
             <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1.5 }}>Corregir registro</Typography>
-            <TextField label="Hora de entrada" fullWidth size="small" value={horaEntradaEdit} onChange={(e) => setHoraEntradaEdit(e.target.value)} sx={{ mb: 2 }} />
+            <TextField label="Hora de entrada" type="time" fullWidth size="small" value={horaEntradaEdit} onChange={(e) => setHoraEntradaEdit(e.target.value)} sx={{ mb: 2 }} InputLabelProps={{ shrink: true }} />
             <TextField select label="Estado" fullWidth size="small" value={estadoEdit} onChange={(e) => setEstadoEdit(e.target.value)} sx={{ mb: 2 }}>
               <MenuItem value="Puntual">Puntual</MenuItem>
               <MenuItem value="Retardo">Retardo</MenuItem>

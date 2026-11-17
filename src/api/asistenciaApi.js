@@ -1,7 +1,8 @@
 import { peticion } from './http'
 
 export function obtenerAsistencias(token) {
-  return peticion('/api/asistencia', { token })
+  // 👈 Aseguramos que se envíe el token
+  return peticion('/api/asistencia', { method: 'GET', token })
 }
 
 export function registrarAsistencia(token, datosAsistencia) {
