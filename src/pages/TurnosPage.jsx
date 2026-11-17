@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import {
-  Box, Typography, Button, Grid, Card, CardContent,
+  Box, Typography, Button, Card, CardContent,
   CircularProgress, Alert, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Paper, TextField,
   InputAdornment, Avatar, Chip, MenuItem, IconButton, Tooltip
@@ -9,7 +9,9 @@ import AddIcon from '@mui/icons-material/Add'
 import SearchIcon from '@mui/icons-material/Search'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import DeleteIcon from '@mui/icons-material/Delete'
+import EditIcon from '@mui/icons-material/Edit' // 👈 Ícono de lápiz
 import { turnoApi } from '../api/turnoApi'
+import { useAuth } from '../context/AuthContext'
 import CrearTurnoModal from '../components/CrearTurnoModal'
 import CambiarTurnoModal from '../components/CambiarTurnoModal'
 import EncabezadoPagina from '../components/EncabezadoPagina'
@@ -43,6 +45,9 @@ const stringToColor = (string) => {
 }
 
 export default function TurnosPage() {
+  const { sesion } = useAuth()
+  const token = sesion?.token
+
   const [resumen, setResumen] = useState([])
   const [asignaciones, setAsignaciones] = useState([])
   const [loading, setLoading] = useState(true)
@@ -58,18 +63,25 @@ export default function TurnosPage() {
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState(null)
 
   const cargarDatos = async () => {
+    if (!token) {
+      setLoading(false)
+      return
+    }
     setLoading(true)
     setError('')
     try {
       const [resResumen, resAsignaciones] = await Promise.all([
-        turnoApi.obtenerResumen(),
-        turnoApi.listarAsignaciones(buscar, turnoFiltro, '', pagina, 10)
+        turnoApi.obtenerResumen(token).catch(() => []),
+        turnoApi.listarAsignaciones(token, buscar, turnoFiltro, '', pagina, 10).catch(() => ({ asignaciones: [], total: 0 }))
       ])
-      setResumen(resResumen || [])
-      setAsignaciones(resAsignaciones.asignaciones || [])
-      setTotal(resAsignaciones.total || 0)
+      
+      // Validación a prueba de fallos para evitar que la pantalla quede en blanco
+      setResumen(Array.isArray(resResumen) ? resResumen : [])
+      setAsignaciones(resAsignaciones?.asignaciones || [])
+      setTotal(resAsignaciones?.total || 0)
     } catch (err) {
-      setError(err.message || 'Error al cargar los datos')
+      console.error("Error al cargar datos:", err)
+      setError(err.message || 'Error al conectar con la API.')
     } finally {
       setLoading(false)
     }
@@ -77,7 +89,8 @@ export default function TurnosPage() {
 
   useEffect(() => {
     cargarDatos()
-  }, [pagina, turnoFiltro])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, pagina, turnoFiltro])
 
   const handleBuscarKeyPress = (e) => {
     if (e.key === 'Enter') {
@@ -89,7 +102,7 @@ export default function TurnosPage() {
   const handleEliminarTurno = async (turnoId) => {
     if (!window.confirm('¿Estás seguro de eliminar este turno?')) return
     try {
-      await turnoApi.eliminarTurno(turnoId)
+      await turnoApi.eliminarTurno(token, turnoId)
       cargarDatos() 
     } catch (err) {
       alert(err.message || 'Error al eliminar el turno')
@@ -105,6 +118,7 @@ export default function TurnosPage() {
   }
 
   return (
+<<<<<<< Updated upstream
     <Box sx={{ width: '100%', boxSizing: 'border-box', pb: 4 }}>
       <EncabezadoPagina
         titulo="Turnos"
@@ -115,22 +129,40 @@ export default function TurnosPage() {
           </Button>
         }
       />
+=======
+    <Box sx={{ p: { xs: 2, md: 4 }, bgcolor: '#fff', minHeight: '100vh', width: '100%', maxWidth: '100vw', boxSizing: 'border-box' }}>
+      
+      {/* Header */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 4 }}>
+        <Box>
+          <Typography variant="h4" fontWeight="bold" color={COLORS.textMain}>Turnos</Typography>
+          <Typography variant="body1" color="textSecondary" sx={{ mt: 0.5 }}>Gestiona horarios y asignaciones del personal.</Typography>
+        </Box>
+        <Button variant="contained" startIcon={<AddIcon />} onClick={() => setModalCrearOpen(true)} sx={{ bgcolor: COLORS.primary, '&:hover': { bgcolor: '#00796b' }, textTransform: 'none', borderRadius: 1, px: 2, py: 1, fontWeight: 600 }}>
+          Nuevo turno
+        </Button>
+      </Box>
+>>>>>>> Stashed changes
 
       {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
-      {/* Tarjetas de Resumen */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      {/* Tarjetas de Resumen - FLEXBOX PARA OCUPAR TODO EL ANCHO */}
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mb: 4, width: '100%' }}>
         {loading ? (
-           <Grid item xs={12}><CircularProgress size={24} sx={{ color: COLORS.primary }} /></Grid>
+           <Box width="100%" display="flex" justifyContent="center" py={3}>
+             <CircularProgress size={28} sx={{ color: COLORS.primary }} />
+           </Box>
+        ) : resumen.length === 0 ? (
+          <Typography color="textSecondary">No hay turnos activos.</Typography>
         ) : resumen.map((turno) => {
           const isAdmin = turno.nombre.toLowerCase().includes('admin')
           return (
-            <Grid item xs={12} md={6} lg={4} key={turno.turno_id}>
-              <Card variant="outlined" sx={{ borderRadius: 2, boxShadow: 'none', borderColor: COLORS.border }}>
-                <CardContent sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2.5, '&:last-child': { pb: 2.5 } }}>
+            <Box key={turno.turno_id} sx={{ flex: '1 1 300px', minWidth: '280px', maxWidth: { xs: '100%', lg: 'calc(33.333% - 16px)' } }}>
+              <Card variant="outlined" sx={{ borderRadius: 2, boxShadow: 'none', borderColor: COLORS.border, height: '100%', display: 'flex', alignItems: 'center' }}>
+                <CardContent sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2.5, width: '100%', '&:last-child': { pb: 2.5 } }}>
                   <Box display="flex" alignItems="center" gap={2}>
-                    <Box sx={{ p: 1, borderRadius: '50%', bgcolor: '#e0f2f1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <AccessTimeIcon sx={{ color: COLORS.primary, fontSize: 20 }} />
+                    <Box sx={{ p: 1.2, borderRadius: '50%', bgcolor: '#e0f2f1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <AccessTimeIcon sx={{ color: COLORS.primary, fontSize: 22 }} />
                     </Box>
                     <Box>
                       <Typography variant="subtitle1" fontWeight="bold" color={COLORS.textMain} sx={{ lineHeight: 1.2 }}>{turno.nombre}</Typography>
@@ -148,13 +180,13 @@ export default function TurnosPage() {
                   </Box>
                 </CardContent>
               </Card>
-            </Grid>
+            </Box>
           )
         })}
-      </Grid>
+      </Box>
 
-      {}
-      <Paper variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden', borderColor: COLORS.border }}>
+      {/* Tabla de Asignaciones */}
+      <Paper variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden', borderColor: COLORS.border, width: '100%' }}>
         <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${COLORS.border}` }}>
           <Typography variant="h6" fontWeight="bold" color={COLORS.textMain}>Asignación por empleado</Typography>
           
@@ -183,15 +215,15 @@ export default function TurnosPage() {
           </Box>
         </Box>
 
-        <TableContainer>
-          <Table>
+        <TableContainer sx={{ width: '100%' }}>
+          <Table sx={{ width: '100%' }}>
             <TableHead sx={{ bgcolor: '#f8f9fa' }}>
               <TableRow>
                 <TableCell sx={{ fontWeight: 600, color: COLORS.textSecondary, fontSize: '0.75rem', textTransform: 'uppercase' }}>EMPLEADO</TableCell>
                 <TableCell sx={{ fontWeight: 600, color: COLORS.textSecondary, fontSize: '0.75rem', textTransform: 'uppercase' }}>DEPARTAMENTO</TableCell>
                 <TableCell sx={{ fontWeight: 600, color: COLORS.textSecondary, fontSize: '0.75rem', textTransform: 'uppercase' }}>TURNO ASIGNADO</TableCell>
                 <TableCell sx={{ fontWeight: 600, color: COLORS.textSecondary, fontSize: '0.75rem', textTransform: 'uppercase' }}>VIGENTE DESDE</TableCell>
-                <TableCell align="right"></TableCell>
+                <TableCell align="center" sx={{ fontWeight: 600, color: COLORS.textSecondary, fontSize: '0.75rem', textTransform: 'uppercase' }}>ACCIÓN</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -217,14 +249,22 @@ export default function TurnosPage() {
                         <Chip label={`${asig.turno_nombre} · ${asig.horario}`} size="small" sx={{ bgcolor: isAdmin ? COLORS.chipAdministrativo.bg : COLORS.chipOperativo.bg, color: isAdmin ? COLORS.chipAdministrativo.text : COLORS.chipOperativo.text, fontWeight: 600, borderRadius: 1, height: 24, fontSize: '0.75rem' }} />
                       </TableCell>
                       <TableCell><Typography variant="body2" color="#4a5568">{asig.vigente_desde ? new Date(asig.vigente_desde).toLocaleDateString('es-ES') : '-'}</Typography></TableCell>
-                      <TableCell align="right">
-                        <Button 
-                          size="small" 
-                          onClick={() => abrirModalCambiar(asig)}
-                          sx={{ textTransform: 'none', color: COLORS.primary, fontWeight: 600, '&:hover': { bgcolor: 'transparent', textDecoration: 'underline' } }}
-                        >
-                          Cambiar
-                        </Button>
+                      
+                      {/* ACCIÓN: ÍCONO DE LÁPIZ */}
+                      <TableCell align="center">
+                        <Tooltip title="Cambiar turno">
+                          <IconButton 
+                            size="small" 
+                            onClick={() => abrirModalCambiar(asig)}
+                            sx={{ 
+                              color: COLORS.primary, 
+                              bgcolor: '#e0f2f1', 
+                              '&:hover': { bgcolor: '#b2dfdb' } 
+                            }}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                       </TableCell>
                     </TableRow>
                   )
@@ -243,7 +283,13 @@ export default function TurnosPage() {
         <Button size="small" disabled={pagina * 10 >= total} onClick={() => setPagina(pagina + 1)} sx={{ color: COLORS.primary, textTransform: 'none' }}>Siguiente</Button>
       </Box>
 
-      <CrearTurnoModal open={modalCrearOpen} onClose={() => setModalCrearOpen(false)} onSaved={() => cargarDatos()} />
+      {/* MODALES CON EL TOKEN INCLUIDO */}
+      <CrearTurnoModal 
+        open={modalCrearOpen} 
+        onClose={() => setModalCrearOpen(false)} 
+        onSaved={() => cargarDatos()} 
+        token={token} 
+      />
       
       <CambiarTurnoModal 
         open={modalCambiarOpen} 
@@ -251,6 +297,7 @@ export default function TurnosPage() {
         onSaved={() => cargarDatos()} 
         empleado={empleadoSeleccionado}
         turnos={resumen}
+        token={token} 
       />
     </Box>
   )

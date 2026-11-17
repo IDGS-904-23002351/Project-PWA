@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react'
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
-import { Box, CircularProgress, TextField, InputAdornment } from '@mui/material'
+import { Box, CircularProgress, TextField, InputAdornment, useMediaQuery, useTheme } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
 
 // Corregir icono por defecto de Leaflet en React
@@ -14,7 +14,6 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 })
 
-// Componente para controlar el mapa desde afuera (mover el centro)
 function MapController({ center }) {
   const map = useMap()
   useEffect(() => {
@@ -26,6 +25,9 @@ function MapController({ center }) {
 }
 
 export default function MapaDireccion({ onDireccionSeleccionada }) {
+  const theme = useTheme()
+  const isSmUp = useMediaQuery(theme.breakpoints.up('sm'))
+
   const [position, setPosition] = useState(null)
   const [center, setCenter] = useState([19.4326, -99.1332]) // CDMX por defecto
   const [loading, setLoading] = useState(false)
@@ -39,10 +41,10 @@ export default function MapaDireccion({ onDireccionSeleccionada }) {
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`
       )
       const data = await res.json()
-      
+
       if (data && data.address) {
         const addr = data.address
-        onDireccionSeleccionada({
+        onDireccionSeleccionada?.({
           calle: `${addr.road || ''} ${addr.house_number || ''}`.trim(),
           colonia: addr.suburb || addr.neighbourhood || '',
           ciudad: addr.city || addr.town || addr.village || '',
@@ -75,13 +77,13 @@ export default function MapaDireccion({ onDireccionSeleccionada }) {
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&addressdetails=1&limit=1`
       )
       const data = await res.json()
-      
+
       if (data && data.length > 0) {
         const lat = parseFloat(data[0].lat)
         const lng = parseFloat(data[0].lon)
         setCenter([lat, lng])
         setPosition([lat, lng])
-        obtenerDireccion(lat, lng) // Llenar los campos del formulario
+        obtenerDireccion(lat, lng)
       } else {
         alert('No se encontró la dirección. Intenta ser más específico.')
         setLoading(false)
@@ -95,11 +97,7 @@ export default function MapaDireccion({ onDireccionSeleccionada }) {
   return (
     <Box sx={{ position: 'relative', width: '100%', mb: 2 }}>
       {/* Buscador sobre el mapa */}
-      <Box 
-        component="form" 
-        onSubmit={handleSearch} 
-        sx={{ display: 'flex', gap: 1, mb: 1.5 }}
-      >
+      <Box component="form" onSubmit={handleSearch} sx={{ display: 'flex', gap: 1, mb: 1.5 }}>
         <TextField
           fullWidth
           size="small"
@@ -116,17 +114,36 @@ export default function MapaDireccion({ onDireccionSeleccionada }) {
         />
       </Box>
 
-      {/* Contenedor del mapa */}
-      <Box sx={{ position: 'relative', height: 300, borderRadius: 1, overflow: 'hidden', border: '1px solid #e0e0e0' }}>
+      {/* Contenedor del mapa responsivo */}
+      <Box
+        sx={{
+          position: 'relative',
+          height: isSmUp ? 320 : 240, // Responsivo: 320px en PC, 240px en móvil
+          borderRadius: 1,
+          overflow: 'hidden',
+          border: '1px solid #e0e0e0',
+        }}
+      >
         {loading && (
-          <Box sx={{ position: 'absolute', top: 10, right: 10, zIndex: 1000, bgcolor: 'white', p: 1, borderRadius: 1, boxShadow: 2 }}>
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 10,
+              right: 10,
+              zIndex: 1000,
+              bgcolor: 'white',
+              p: 1,
+              borderRadius: 1,
+              boxShadow: 2,
+            }}
+          >
             <CircularProgress size={20} />
           </Box>
         )}
-        
-        <MapContainer 
-          center={center} 
-          zoom={12} 
+
+        <MapContainer
+          center={center}
+          zoom={12}
           style={{ height: '100%', width: '100%' }}
           onClick={handleMapClick}
         >

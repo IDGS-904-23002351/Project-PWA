@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, TextField, Grid, CircularProgress, Alert
@@ -12,10 +12,19 @@ const initialState = {
   minutos_tolerancia: 10
 }
 
-export default function CrearTurnoModal({ open, onClose, onSaved }) {
+// 👈 Recibimos el token como prop
+export default function CrearTurnoModal({ open, onClose, onSaved, token }) {
   const [form, setForm] = useState(initialState)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  // Limpiar el formulario cada vez que se abre
+  useEffect(() => {
+    if (open) {
+      setForm(initialState)
+      setError('')
+    }
+  }, [open])
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -23,6 +32,12 @@ export default function CrearTurnoModal({ open, onClose, onSaved }) {
 
   const handleSubmit = async () => {
     setError('')
+    
+    if (!token) {
+      setError('Sesión inválida. Vuelve a iniciar sesión.')
+      return
+    }
+
     if (!form.nombre.trim() || !form.hora_inicio || !form.hora_fin) {
       setError('El nombre, hora de inicio y hora de fin son obligatorios.')
       return
@@ -30,17 +45,28 @@ export default function CrearTurnoModal({ open, onClose, onSaved }) {
 
     setLoading(true)
     try {
-      await turnoApi.crearTurno({
+      // 👈 Formateamos las horas a "HH:mm:ss" que es lo que espera SQL Server
+      const formatearHora = (hora) => {
+        if (!hora) return '00:00:00'
+        return hora.length === 5 ? `${hora}:00` : hora
+      }
+
+      const payload = {
         nombre: form.nombre.trim(),
-        hora_inicio: form.hora_inicio,
-        hora_fin: form.hora_fin,
-        minutos_tolerancia: Number(form.minutos_tolerancia)
-      })
-      onSaved?.()
+        hora_inicio: formatearHora(form.hora_inicio),
+        hora_fin: formatearHora(form.hora_fin),
+        minutos_tolerancia: Number(form.minutos_tolerancia) || 10
+      }
+
+      // 👈 Pasamos el token y el payload
+      await turnoApi.crearTurno(token, payload)
+      
+      onSaved?.() // Esto recarga la lista en TurnosPage
       onClose()
-      setForm(initialState)
     } catch (err) {
-      setError(err.mensaje || err.detalle || 'Error al crear el turno')
+      // Capturamos el error exacto que devuelve el backend
+      const mensajeError = err?.response?.data?.mensaje || err?.response?.data?.detalle || err.message || 'Error al crear el turno'
+      setError(mensajeError)
     } finally {
       setLoading(false)
     }

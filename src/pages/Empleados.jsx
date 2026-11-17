@@ -1,3 +1,4 @@
+// src/pages/Empleados.jsx
 import React, { useState, useEffect, useCallback } from 'react'
 import {
   Box, Typography, Button, TextField, MenuItem, Select,
@@ -40,7 +41,11 @@ export default function Empleados() {
       const lista = data?.empleados || (Array.isArray(data) ? data : [])
       setEmpleados(lista)
     } catch (error) {
-      setSnackbar({ open: true, message: error.message || 'Error al cargar empleados', severity: 'error' })
+      setSnackbar({
+        open: true,
+        message: error.message || 'Error al cargar empleados',
+        severity: 'error',
+      })
     } finally {
       setLoading(false)
     }
@@ -60,12 +65,14 @@ export default function Empleados() {
 
   const abrirEditar = async (e, emp) => {
     e.stopPropagation()
-    if (!emp?.id || !sesion?.token) return
+    const id = emp?.id || emp?.Id
+    if (!id || !sesion?.token) return
 
     setLoading(true)
     try {
-      const data = await empleadoApi.obtener(sesion.token, emp.id)
+      const data = await empleadoApi.obtener(sesion.token, id)
       const completo = data?.empleado ?? data ?? emp
+      console.log('EMPLEADO CARGADO >>>', completo)
       setEmpleadoSeleccionado(completo)
       setModalOpen(true)
     } catch (error) {
@@ -76,7 +83,7 @@ export default function Empleados() {
   }
 
   const abrirDetalle = (emp) => {
-    setEmpleadoDetalleId(emp.id)
+    setEmpleadoDetalleId(emp.id || emp.Id)
     setDetalleOpen(true)
   }
 
@@ -90,7 +97,8 @@ export default function Empleados() {
     if (!confirmDelete || !sesion?.token) return
     setDeleting(true)
     try {
-      await empleadoApi.eliminar(sesion.token, confirmDelete.id, motivo || 'No especificado')
+      const id = confirmDelete.id || confirmDelete.Id
+      await empleadoApi.eliminar(sesion.token, id, motivo || 'No especificado')
       setSnackbar({ open: true, message: 'Empleado eliminado correctamente', severity: 'success' })
       setConfirmDelete(null)
       cargarEmpleados()
@@ -105,7 +113,8 @@ export default function Empleados() {
     e.stopPropagation()
     if (!sesion?.token) return
     try {
-      await empleadoApi.reactivar(sesion.token, emp.id)
+      const id = emp.id || emp.Id
+      await empleadoApi.reactivar(sesion.token, id)
       setSnackbar({ open: true, message: 'Empleado reactivado correctamente', severity: 'success' })
       cargarEmpleados()
     } catch (error) {
@@ -119,9 +128,19 @@ export default function Empleados() {
   }
 
   const empleadosFiltrados = empleados.filter((emp) => {
-    const coincideEstado = filtroEstado === 'todos' || emp.estado === filtroEstado
-    const nombreCompleto = `${emp.persona_id?.nombre || ''} ${emp.persona_id?.apellido_Paterno || ''}`.toLowerCase()
-    const coincideTexto = !buscar.trim() || nombreCompleto.includes(buscar.toLowerCase()) || (emp.rfc || '').toLowerCase().includes(buscar.toLowerCase())
+    const estado = emp.estado || emp.Estado
+    const coincideEstado = filtroEstado === 'todos' || estado === filtroEstado
+
+    const nombre = emp.persona_id?.Nombre || emp.persona_id?.nombre || ''
+    const paterno = emp.persona_id?.Apellido_Paterno || emp.persona_id?.apellido_Paterno || ''
+    const nombreCompleto = `${nombre} ${paterno}`.toLowerCase()
+    const rfc = emp.rfc || emp.Rfc || ''
+
+    const coincideTexto =
+      !buscar.trim() ||
+      nombreCompleto.includes(buscar.toLowerCase()) ||
+      rfc.toLowerCase().includes(buscar.toLowerCase())
+
     return coincideEstado && coincideTexto
   })
 
@@ -193,7 +212,7 @@ export default function Empleados() {
                 <TableCell
                   key={h}
                   align={i === 6 ? 'right' : 'left'}
-                  sx={{ fontWeight: 700, color: 'text.secondary', fontSize: '0.75rem',textAlign:'center' }}
+                  sx={{ fontWeight: 700, color: 'text.secondary', fontSize: '0.75rem', textAlign: 'center' }}
                 >
                   {h}
                 </TableCell>
@@ -214,98 +233,112 @@ export default function Empleados() {
                 </TableCell>
               </TableRow>
             ) : (
-              empleadosFiltrados.map((emp) => (
-                <Tooltip key={emp.id} title="Doble click para ver el detalle" placement="top" arrow>
-                  <TableRow hover onDoubleClick={() => abrirDetalle(emp)} sx={{ cursor: 'pointer' }}>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Avatar sx={{ bgcolor: '#ccfbf1', color: '#0f766e', fontWeight: 700 }}>
-                          {getInitials(emp.persona_id?.nombre, emp.persona_id?.apellido_Paterno)}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="subtitle2" fontWeight="bold" color="text.primary" noWrap>
-                            {`${emp.persona_id?.nombre || ''} ${emp.persona_id?.apellido_Paterno || ''}`}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary" noWrap>
-                            {emp.rfc || 'SIN RFC'}
-                          </Typography>
+              empleadosFiltrados.map((emp) => {
+                const id = emp.id || emp.Id
+                const persona = emp.persona_id || {}
+                const nombre = persona.Nombre || persona.nombre || ''
+                const paterno = persona.Apellido_Paterno || persona.apellido_Paterno || ''
+                const rfc = emp.rfc || emp.Rfc || ''
+                const depto = emp.departamento_id?.nombre || emp.departamento_id?.Nombre || 'N/A'
+                const turno = emp.turno_id?.nombre || emp.turno_id?.Nombre || 'N/A'
+                const estado = emp.estado || emp.Estado || ''
+
+                return (
+                  <Tooltip key={id} title="Doble click para ver el detalle" placement="top" arrow>
+                    <TableRow hover onDoubleClick={() => abrirDetalle(emp)} sx={{ cursor: 'pointer' }}>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                          <Avatar sx={{ bgcolor: '#ccfbf1', color: '#0f766e', fontWeight: 700 }}>
+                            {getInitials(nombre, paterno)}
+                          </Avatar>
+                          <Box>
+                            <Typography variant="subtitle2" fontWeight="bold" color="text.primary" noWrap>
+                              {`${nombre} ${paterno}`}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" noWrap>
+                              {rfc || 'SIN RFC'}
+                            </Typography>
+                          </Box>
                         </Box>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">Colaborador</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">{emp.departamento_id?.nombre || 'N/A'}</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={emp.turno_id?.nombre === 'Matutino' ? 'Operativo' : 'Administrativo'}
-                        size="small"
-                        sx={{
-                          bgcolor: emp.turno_id?.nombre === 'Matutino' ? '#ccfbf1' : '#e0f2fe',
-                          color: emp.turno_id?.nombre === 'Matutino' ? '#0f766e' : '#0369a1',
-                          fontWeight: 600,
-                        }}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">{emp.turno_id?.nombre || 'N/A'}</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Box
-                          component="span"
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">Colaborador</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">{depto}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={turno === 'Matutino' ? 'Operativo' : 'Administrativo'}
+                          size="small"
                           sx={{
-                            width: 8,
-                            height: 8,
-                            borderRadius: '50%',
-                            bgcolor: emp.estado === 'ACTIVO' ? '#0f766e' : 'text.disabled',
+                            bgcolor: turno === 'Matutino' ? '#ccfbf1' : '#e0f2fe',
+                            color: turno === 'Matutino' ? '#0f766e' : '#0369a1',
+                            fontWeight: 600,
                           }}
                         />
-                        <Typography variant="body2" sx={{ color: emp.estado === 'ACTIVO' ? '#0f766e' : 'text.secondary', fontWeight: 600 }}>
-                          {emp.estado === 'ACTIVO' ? 'Activo' : 'Inactivo'}
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell align="right" onDoubleClick={(e) => e.stopPropagation()}>
-                      <Stack direction="row" spacing={0.5} justifyContent="flex-end">
-                        <Tooltip title="Modificar empleado">
-                          <IconButton
-                            size="small"
-                            onClick={(e) => abrirEditar(e, emp)}
-                            sx={{ color: '#0f766e', '&:hover': { bgcolor: '#ccfbf1' } }}
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">{turno}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Box
+                            component="span"
+                            sx={{
+                              width: 8,
+                              height: 8,
+                              borderRadius: '50%',
+                              bgcolor: estado === 'ACTIVO' ? '#0f766e' : 'text.disabled',
+                            }}
+                          />
+                          <Typography
+                            variant="body2"
+                            sx={{ color: estado === 'ACTIVO' ? '#0f766e' : 'text.secondary', fontWeight: 600 }}
                           >
-                            <Edit fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                        {emp.estado === 'INACTIVO' ? (
-                          <Tooltip title="Reactivar empleado">
+                            {estado === 'ACTIVO' ? 'Activo' : 'Inactivo'}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell align="right" onDoubleClick={(e) => e.stopPropagation()}>
+                        <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                          <Tooltip title="Modificar empleado">
                             <IconButton
                               size="small"
-                              onClick={(e) => handleReactivar(e, emp)}
-                              sx={{ color: '#0284c7', '&:hover': { bgcolor: '#e0f2fe' } }}
+                              onClick={(e) => abrirEditar(e, emp)}
+                              sx={{ color: '#0f766e', '&:hover': { bgcolor: '#ccfbf1' } }}
                             >
-                              <RestoreFromTrash fontSize="small" />
+                              <Edit fontSize="small" />
                             </IconButton>
                           </Tooltip>
-                        ) : (
-                          <Tooltip title="Eliminar empleado">
-                            <IconButton
-                              size="small"
-                              color="error"
-                              onClick={(e) => abrirEliminar(e, emp)}
-                              sx={{ '&:hover': { bgcolor: '#fee2e2' } }}
-                            >
-                              <Delete fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                      </Stack>
-                    </TableCell>
-                  </TableRow>
-                </Tooltip>
-              ))
+                          {estado === 'INACTIVO' ? (
+                            <Tooltip title="Reactivar empleado">
+                              <IconButton
+                                size="small"
+                                onClick={(e) => handleReactivar(e, emp)}
+                                sx={{ color: '#0284c7', '&:hover': { bgcolor: '#e0f2fe' } }}
+                              >
+                                <RestoreFromTrash fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          ) : (
+                            <Tooltip title="Eliminar empleado">
+                              <IconButton
+                                size="small"
+                                color="error"
+                                onClick={(e) => abrirEliminar(e, emp)}
+                                sx={{ '&:hover': { bgcolor: '#fee2e2' } }}
+                              >
+                                <Delete fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  </Tooltip>
+                )
+              })
             )}
           </TableBody>
         </Table>
@@ -316,6 +349,7 @@ export default function Empleados() {
         onClose={() => setModalOpen(false)}
         empleado={empleadoSeleccionado}
         onSaved={handleSaved}
+        token={sesion?.token}
       />
 
       <EmpleadoDetalleModal
@@ -330,7 +364,8 @@ export default function Empleados() {
           <DialogContentText sx={{ mb: 2 }}>
             ¿Seguro que deseas eliminar a{' '}
             <strong>
-              {confirmDelete?.persona_id?.nombre} {confirmDelete?.persona_id?.apellido_Paterno}
+              {confirmDelete?.persona_id?.Nombre || confirmDelete?.persona_id?.nombre}{' '}
+              {confirmDelete?.persona_id?.Apellido_Paterno || confirmDelete?.persona_id?.apellido_Paterno}
             </strong>?
           </DialogContentText>
           <TextField
