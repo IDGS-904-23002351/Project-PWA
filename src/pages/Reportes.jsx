@@ -8,9 +8,13 @@ import {
 } from '@mui/material';
 import { Download, CheckCircle, AccessTime, History, Description } from '@mui/icons-material';
 import { reportesApi } from '../api/reportesApi';
+import { useAuth } from '../context/AuthContext';
 import EncabezadoPagina from '../components/EncabezadoPagina';
 
 export default function Reportes() {
+  const { sesion } = useAuth();
+  const token = sesion?.token;
+
   // Estados de los filtros
   const [fechaInicio, setFechaInicio] = useState('2026-10-01');
   const [fechaFin, setFechaFin] = useState('2026-10-07');
@@ -26,23 +30,26 @@ export default function Reportes() {
 
   // Función para cargar los datos desde el Backend
   const handleAplicarFiltros = async () => {
+    if (!token) return;
     setLoading(true);
+    
+    // 👈 FORMATEAMOS LAS FECHAS PARA EVITAR ERRORES EN C#
     const filtros = {
-      fechaInicio,
-      fechaFin,
+      fechaInicio: fechaInicio ? new Date(fechaInicio + 'T12:00:00').toISOString() : null,
+      fechaFin: fechaFin ? new Date(fechaFin + 'T12:00:00').toISOString() : null,
       departamentoId: departamentoId !== 'todos' ? parseInt(departamentoId) : null
     };
 
     try {
       let resultado = [];
       switch (activeTab) {
-        case 'asistencia': resultado = await reportesApi.getAsistencia(filtros); break;
-        case 'faltas': resultado = await reportesApi.getFaltasRetardos(filtros); break;
-        case 'horas': resultado = await reportesApi.getHorasExtra(filtros); break;
-        case 'nomina': resultado = await reportesApi.getNominaResumen(filtros); break;
+        case 'asistencia': resultado = await reportesApi.getAsistencia(token, filtros); break;
+        case 'faltas': resultado = await reportesApi.getFaltasRetardos(token, filtros); break;
+        case 'horas': resultado = await reportesApi.getHorasExtra(token, filtros); break;
+        case 'nomina': resultado = await reportesApi.getNominaResumen(token, filtros); break;
         default: break;
       }
-      setData(resultado || []);
+      setData(Array.isArray(resultado) ? resultado : []);
     } catch (error) {
       console.error("Error al cargar reporte:", error);
       setSnackbar({ open: true, message: error.message || 'Error al cargar datos', severity: 'error' });
@@ -52,19 +59,18 @@ export default function Reportes() {
     }
   };
 
-  // Recargar datos cuando cambia la pestaña activa
   useEffect(() => {
-    handleAplicarFiltros();
+    if (token) {
+      handleAplicarFiltros();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
+  }, [activeTab, token]);
 
-  // Utilidad para generar iniciales del avatar
   const getInitials = (nombre) => {
     if (!nombre) return 'NN';
     return nombre.substring(0, 2).toUpperCase();
   };
 
-  // Configuración visual de las tarjetas superiores
   const tarjetas = [
     { id: 'asistencia', title: 'Asistencia', desc: 'Entradas, salidas y registros incompletos', icon: <CheckCircle />, bg: '#e0f2fe', color: '#0284c7' },
     { id: 'faltas', title: 'Faltas y retardos', desc: 'Incidencias por empleado y departamento', icon: <AccessTime />, bg: '#fef3c7', color: '#d97706' },
@@ -72,7 +78,6 @@ export default function Reportes() {
     { id: 'nomina', title: 'Resumen de nómina', desc: 'Percepciones, deducciones y netos', icon: <Description />, bg: '#f3e8ff', color: '#7e22ce' },
   ];
 
-  // Función que renderiza el cuerpo de la tabla según la pestaña activa
   const renderTabla = () => {
     if (loading) {
       return (
@@ -103,19 +108,17 @@ export default function Reportes() {
               <Avatar sx={{ bgcolor: '#e0f2f1', color: '#00897b', fontWeight: 'bold' }}>
                 {getInitials(item.nombreEmpleado)}
               </Avatar>
-              <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                <Typography variant="subtitle2" fontWeight="bold" color="#1e293b">
-                  {item.nombreEmpleado || 'Sin nombre'}
-                </Typography>
-              </Box>
+              <Typography variant="subtitle2" fontWeight="bold" color="#1e293b">
+                {item.nombreEmpleado || 'Sin nombre'}
+              </Typography>
             </Box>
           </TableCell>
-          <TableCell>{item.diasLaborados || 0}</TableCell>
-          <TableCell>{item.totalRetardos || 0}</TableCell>
-          <TableCell>{item.totalFaltas || 0}</TableCell>
+          <TableCell>{item.diasLaborados ?? 0}</TableCell>
+          <TableCell>{item.totalRetardos ?? 0}</TableCell>
+          <TableCell>{item.totalFaltas ?? 0}</TableCell>
           <TableCell>
             <Chip 
-              label={`${item.totalHorasExtra || 0} h`} 
+              label={`${item.totalHorasExtra ?? 0} h`} 
               size="small" 
               sx={{ bgcolor: '#e0f2fe', color: '#0284c7', fontWeight: 'bold' }} 
             />
@@ -129,14 +132,15 @@ export default function Reportes() {
       return data.map((item, index) => (
         <TableRow key={index} hover>
           <TableCell>
-            <Typography variant="subtitle2" fontWeight="bold">{item.nombreEmpleado}</Typography>
+            <Typography variant="subtitle2" fontWeight="bold">{item.nombreEmpleado || 'Sin nombre'}</Typography>
             <Typography variant="caption" color="textSecondary">{item.departamento || 'N/A'}</Typography>
           </TableCell>
-          <TableCell>{item.totalAsistencias || 0}</TableCell>
-          <TableCell>{item.totalRetardos || 0}</TableCell>
-          <TableCell>{item.minutosRetardo || 0} min</TableCell>
+          <TableCell>{item.totalAsistencias ?? 0}</TableCell>
+          <TableCell>{item.totalRetardos ?? 0}</TableCell>
+          {/* 👈 AQUÍ USAMOS ?? PARA QUE SI VIENE NULL LO VUELVA 0 */}
+          <TableCell>{item.minutosRetardo ?? 0} min</TableCell>
           <TableCell>
-            <Typography color="error.main" fontWeight="bold">{item.totalFaltas || 0}</Typography>
+            <Typography color="error.main" fontWeight="bold">{item.totalFaltas ?? 0}</Typography>
           </TableCell>
         </TableRow>
       ));
@@ -147,15 +151,15 @@ export default function Reportes() {
       return data.map((item, index) => (
         <TableRow key={index} hover>
           <TableCell>
-            <Typography variant="subtitle2" fontWeight="bold">{item.nombreEmpleado}</Typography>
+            <Typography variant="subtitle2" fontWeight="bold">{item.nombreEmpleado || 'Sin nombre'}</Typography>
             <Typography variant="caption" color="textSecondary">{item.departamento || 'N/A'}</Typography>
           </TableCell>
-          <TableCell>{item.totalHoras || 0} h</TableCell>
+          <TableCell>{item.totalHoras ?? 0} h</TableCell>
           <TableCell>
-            <Chip label={`${item.horasPendientes || 0} h`} size="small" sx={{ bgcolor: '#fef3c7', color: '#d97706' }} />
+            <Chip label={`${item.horasPendientes ?? 0} h`} size="small" sx={{ bgcolor: '#fef3c7', color: '#d97706' }} />
           </TableCell>
           <TableCell>
-            <Chip label={`${item.horasAutorizadas || 0} h`} size="small" sx={{ bgcolor: '#dcfce7', color: '#166534' }} />
+            <Chip label={`${item.horasAutorizadas ?? 0} h`} size="small" sx={{ bgcolor: '#dcfce7', color: '#166534' }} />
           </TableCell>
         </TableRow>
       ));
@@ -166,13 +170,13 @@ export default function Reportes() {
       return data.map((item, index) => (
         <TableRow key={index} hover>
           <TableCell>
-            <Typography variant="subtitle2" fontWeight="bold">{item.nombreEmpleado}</Typography>
-            <Typography variant="caption" color="textSecondary">{item.periodo}</Typography>
+            <Typography variant="subtitle2" fontWeight="bold">{item.nombreEmpleado || 'Sin nombre'}</Typography>
+            <Typography variant="caption" color="textSecondary">{item.periodo || 'N/A'}</Typography>
           </TableCell>
-          <TableCell sx={{ color: 'success.main' }}>${item.percepciones?.toFixed(2) || '0.00'}</TableCell>
-          <TableCell sx={{ color: 'error.main' }}>${item.deducciones?.toFixed(2) || '0.00'}</TableCell>
+          <TableCell sx={{ color: 'success.main' }}>${(item.percepciones ?? 0).toFixed(2)}</TableCell>
+          <TableCell sx={{ color: 'error.main' }}>${(item.deducciones ?? 0).toFixed(2)}</TableCell>
           <TableCell>
-            <Typography fontWeight="bold">${item.netoAPagar?.toFixed(2) || '0.00'}</Typography>
+            <Typography fontWeight="bold">${(item.netoAPagar ?? 0).toFixed(2)}</Typography>
           </TableCell>
         </TableRow>
       ));
@@ -181,7 +185,6 @@ export default function Reportes() {
     return null;
   };
 
-  // Definimos las columnas dinámicas según la pestaña
   const getColumnas = () => {
     switch (activeTab) {
       case 'asistencia': return ['EMPLEADO', 'DÍAS LABORADOS', 'RETARDOS', 'FALTAS', 'HORAS EXTRA'];
@@ -209,7 +212,6 @@ export default function Reportes() {
         }
       />
 
-      {/* Tarjetas Seleccionables */}
       <Grid container spacing={2} mb={3}>
         {tarjetas.map((tab) => (
           <Grid item xs={12} sm={6} md={3} key={tab.id}>
@@ -238,7 +240,6 @@ export default function Reportes() {
         ))}
       </Grid>
 
-      {/* Barra de Filtros */}
       <Paper sx={{ p: 2, mb: 3, display: 'flex', gap: 2, alignItems: 'center', borderRadius: 3, flexWrap: 'wrap' }} elevation={0}>
         <TextField
           label="Inicio"
@@ -265,7 +266,6 @@ export default function Reportes() {
           sx={{ minWidth: 180, borderRadius: 2, bgcolor: '#fff' }}
         >
           <MenuItem value="todos">Todos los departamentos</MenuItem>
-          {/* Aquí puedes mapear tus departamentos si los cargas desde una API */}
         </Select>
 
         <Button
@@ -278,7 +278,6 @@ export default function Reportes() {
         </Button>
       </Paper>
 
-      {/* Tabla de Vista Previa */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h6" fontWeight="bold" color="#1e293b">
           Vista previa · {tarjetas.find(t => t.id === activeTab)?.title}
@@ -303,7 +302,6 @@ export default function Reportes() {
         </Table>
       </TableContainer>
 
-      {/* Notificaciones */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={4000}
