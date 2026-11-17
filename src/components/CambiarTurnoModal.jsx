@@ -5,7 +5,6 @@ import {
 } from '@mui/material'
 import { turnoApi } from '../api/turnoApi'
 
-// 👈 Recibimos el token como prop
 export default function CambiarTurnoModal({ open, onClose, onSaved, empleado, turnos, token }) {
   const [nuevoTurno, setNuevoTurno] = useState('')
   const [loading, setLoading] = useState(false)
@@ -13,8 +12,10 @@ export default function CambiarTurnoModal({ open, onClose, onSaved, empleado, tu
 
   useEffect(() => {
     if (open && empleado) {
-      // 👈 Asignamos el turno actual del empleado (que viene como número plano)
-      setNuevoTurno(empleado.turno_id || '')
+      // 👈 FORZAMOS A QUE SEA UN STRING PARA QUE EL SELECT LO ENCUENTRE
+      // Si empleado.turno_id es 1 (número), lo convertimos a "1" (texto)
+      const turnoActual = empleado.turno_id ? String(empleado.turno_id) : ''
+      setNuevoTurno(turnoActual)
       setError('')
     }
   }, [open, empleado])
@@ -39,20 +40,17 @@ export default function CambiarTurnoModal({ open, onClose, onSaved, empleado, tu
 
     setLoading(true)
     try {
-      // 👈 Armamos el payload EXACTO que espera el C#
       const payload = {
         empleado_id: parseInt(empleado.id, 10),
         nuevo_turno_id: parseInt(nuevoTurno, 10)
       }
 
-      // 👈 Enviamos el token y el payload
       await turnoApi.cambiarTurno(token, payload)
       
       onSaved()
       onClose()
     } catch (err) {
-      // Capturamos el mensaje exacto del backend
-      const mensajeError = err?.response?.data?.mensaje || err?.message || 'Error al cambiar el turno'
+      const mensajeError = err?.response?.data?.mensaje || err?.response?.data?.detalle || err?.message || 'Error al cambiar el turno'
       setError(mensajeError)
     } finally {
       setLoading(false)
@@ -73,7 +71,8 @@ export default function CambiarTurnoModal({ open, onClose, onSaved, empleado, tu
           sx={{ mt: 1 }}
         >
           {turnos.map((t) => (
-            <MenuItem key={t.turno_id} value={t.turno_id}>
+            // 👈 NOS ASEGURAMOS DE QUE EL VALUE TAMBIÉN SEA STRING
+            <MenuItem key={t.turno_id} value={String(t.turno_id)}>
               {t.nombre} ({t.horario})
             </MenuItem>
           ))}
