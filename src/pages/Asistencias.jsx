@@ -4,13 +4,13 @@ import {
   TableHead, TableRow, Button, Chip, TextField, MenuItem, Drawer, Avatar, Alert, CircularProgress
 } from '@mui/material'
 import FileDownloadIcon from '@mui/icons-material/FileDownload'
-import { obtenerAsistencias, corregirAsistencia } from '../api/asistenciaApi' // 👈 Importamos corregirAsistencia
-import { useAuth } from '../context/AuthContext' // 👈 Importamos AuthContext
+import { obtenerAsistencias, corregirAsistencia } from '../api/asistenciaApi' 
+import { useAuth } from '../context/AuthContext' 
 import EncabezadoPagina from '../components/EncabezadoPagina'
 
 export default function Asistencias() {
   const { sesion } = useAuth()
-  const token = sesion?.token // 👈 Obtenemos el token
+  const token = sesion?.token 
 
   const [asistencias, setAsistencias] = useState([])
   const [seleccionado, setSeleccionado] = useState(null)
@@ -24,11 +24,11 @@ export default function Asistencias() {
   const [guardando, setGuardando] = useState(false)
 
   const cargarDatos = async () => {
-    if (!token) return; // Si no hay token, no hace la petición
+    if (!token) return; 
     try {
       setCargando(true)
       setError(null)
-      const data = await obtenerAsistencias(token) // 👈 Le pasamos el token
+      const data = await obtenerAsistencias(token) 
       setAsistencias(data || [])
     } catch (e) {
       setError(e.message || 'Error al obtener asistencias desde el servidor.')
@@ -39,7 +39,7 @@ export default function Asistencias() {
 
   useEffect(() => {
     cargarDatos()
-  }, [token]) // 👈 Se ejecuta cuando el token esté listo
+  }, [token]) 
 
   const handleAbrirDrawer = (item) => {
     setSeleccionado(item)
@@ -55,7 +55,6 @@ export default function Asistencias() {
     }
     try {
       setGuardando(true)
-      // 👈 Corregido: antes tenías 'asistenciaApi.corregirAsistencia', ahora es directo
       await corregirAsistencia(token, seleccionado.id, {
         horaEntrada: horaEntradaEdit,
         estado: estadoEdit,
@@ -149,7 +148,6 @@ export default function Asistencias() {
                 </TableRow>
               ) : (
                 asistenciasFiltradas.map((item) => {
-                  // 👈 Buscamos el nombre de forma flexible como en Turnos
                   const nombre = item.empleadoNombre || item.nombre || item.empleado?.persona_id?.nombre || `Empleado #${item.empleadoId || item.id}`
                   const iniciales = nombre.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase()
                   const est = getColorEstado(item.estado)
@@ -163,7 +161,6 @@ export default function Asistencias() {
                           {nombre}
                         </Typography>
                       </TableCell>
-                      {/* 👈 Mostramos solo la hora formateada, no la fecha completa */}
                       <TableCell>{item.horaEntrada ? item.horaEntrada.split('T')[1]?.substring(0,8) : '--'}</TableCell>
                       <TableCell>{item.horaSalida ? item.horaSalida.split('T')[1]?.substring(0,8) : '--'}</TableCell>
                       <TableCell>{item.retardo || '0 min'}</TableCell>
@@ -185,7 +182,6 @@ export default function Asistencias() {
         </TableContainer>
       )}
 
-      {/* Drawer de Corrección */}
       <Drawer anchor="right" open={Boolean(seleccionado)} onClose={() => setSeleccionado(null)}>
         <Box sx={{ width: 420, p: 3, display: 'flex', flexDirection: 'column', height: '100%' }}>
           <Box sx={{ flexGrow: 1 }}>
@@ -193,7 +189,7 @@ export default function Asistencias() {
             <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>{seleccionado?.empleadoNombre || seleccionado?.nombre || `Empleado #${seleccionado?.id}`}</Typography>
             
             <Paper sx={{ p: 2, bgcolor: '#f1f5f9', mb: 3, textAlign: 'center', borderRadius: 2 }}>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>📍 Registrado con geocerca</Typography>
+              <Typography variant="body2" sx={{ fontWeight: 600 }}> Registrado con geocerca</Typography>
             </Paper>
 
             <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1.5 }}>Corregir registro</Typography>

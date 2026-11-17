@@ -16,8 +16,6 @@ import EncabezadoPagina from '../components/EncabezadoPagina'
 import useApi from '../hooks/useApi'
 import { fechaHora } from '../utils/formato'
 
-// Parámetros que se pueden editar y cómo se muestran.
-// EMPRESA_ACTIVA_ID no se edita desde aquí: cambiarla afecta todo el sistema.
 const EDITABLES = {
   TOLERANCIA_RETARDO_MIN: {
     titulo: 'Tolerancia de retardo',
@@ -50,7 +48,6 @@ function Seccion({ icono, titulo, descripcion, children }) {
   )
 }
 
-// Un parámetro editable con su botón Guardar
 function FilaParametro({ parametro, alGuardar }) {
   const info = EDITABLES[parametro.clave]
   const [valor, setValor] = useState(parametro.valor)
@@ -106,7 +103,6 @@ export default function Configuracion() {
     cargar()
   }, [cargar])
 
-  // Guarda un parámetro, vuelve a cargar y avisa. Si falla, la excepción llega a la fila.
   const guardar = async (clave, valor) => {
     const respuesta = await llamar(guardarParametro, clave, valor)
     setAviso(respuesta.mensaje)
@@ -133,11 +129,9 @@ export default function Configuracion() {
       )}
 
       {config && (
-        // Celular y tablet: una sección debajo de otra. Pantalla grande (lg): las dos lado a lado.
         <Box sx={{ display: 'grid', gap: 2.5, alignItems: 'start', gridTemplateColumns: { xs: '1fr', lg: 'repeat(2, 1fr)' } }}>
           <Seccion icono={<ApartmentOutlinedIcon />} titulo="Datos de la empresa" descripcion="Empresa activa del sistema. Solo lectura.">
             {empresa ? (
-              // Los campos se acomodan según el ancho de la tarjeta (mínimo 220 px cada uno)
               <Box sx={{ display: 'grid', gap: 2.5, gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
                 <TextField label="Razón social" value={empresa.razonSocial} disabled />
                 <TextField label="Nombre comercial" value={empresa.nombreComercial ?? ''} disabled />

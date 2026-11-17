@@ -1,4 +1,3 @@
-// src/pages/Reportes.jsx
 import React, { useState, useEffect } from 'react';
 import {
   Box, Typography, Button, TextField, MenuItem, Select,
@@ -14,26 +13,18 @@ import EncabezadoPagina from '../components/EncabezadoPagina';
 export default function Reportes() {
   const { sesion } = useAuth();
   const token = sesion?.token;
-
-  // Estados de los filtros
   const [fechaInicio, setFechaInicio] = useState('2026-10-01');
   const [fechaFin, setFechaFin] = useState('2026-10-07');
   const [departamentoId, setDepartamentoId] = useState('todos');
   
-  // Estados de la UI y Datos
   const [activeTab, setActiveTab] = useState('asistencia'); 
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
-  
-  // Estado para notificaciones (Snackbar)
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'error' });
-
-  // Función para cargar los datos desde el Backend
   const handleAplicarFiltros = async () => {
     if (!token) return;
     setLoading(true);
-    
-    // 👈 FORMATEAMOS LAS FECHAS PARA EVITAR ERRORES EN C#
+  
     const filtros = {
       fechaInicio: fechaInicio ? new Date(fechaInicio + 'T12:00:00').toISOString() : null,
       fechaFin: fechaFin ? new Date(fechaFin + 'T12:00:00').toISOString() : null,
@@ -63,7 +54,6 @@ export default function Reportes() {
     if (token) {
       handleAplicarFiltros();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, token]);
 
   const getInitials = (nombre) => {
@@ -99,7 +89,6 @@ export default function Reportes() {
       );
     }
 
-    // --- VISTA: ASISTENCIA ---
     if (activeTab === 'asistencia') {
       return data.map((item, index) => (
         <TableRow key={index} hover>
@@ -127,7 +116,6 @@ export default function Reportes() {
       ));
     }
 
-    // --- VISTA: FALTAS Y RETARDOS ---
     if (activeTab === 'faltas') {
       return data.map((item, index) => (
         <TableRow key={index} hover>
@@ -137,7 +125,6 @@ export default function Reportes() {
           </TableCell>
           <TableCell>{item.totalAsistencias ?? 0}</TableCell>
           <TableCell>{item.totalRetardos ?? 0}</TableCell>
-          {/* 👈 AQUÍ USAMOS ?? PARA QUE SI VIENE NULL LO VUELVA 0 */}
           <TableCell>{item.minutosRetardo ?? 0} min</TableCell>
           <TableCell>
             <Typography color="error.main" fontWeight="bold">{item.totalFaltas ?? 0}</Typography>
@@ -146,7 +133,6 @@ export default function Reportes() {
       ));
     }
 
-    // --- VISTA: HORAS EXTRA ---
     if (activeTab === 'horas') {
       return data.map((item, index) => (
         <TableRow key={index} hover>
@@ -165,7 +151,6 @@ export default function Reportes() {
       ));
     }
 
-    // --- VISTA: NÓMINA ---
     if (activeTab === 'nomina') {
       return data.map((item, index) => (
         <TableRow key={index} hover>

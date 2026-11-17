@@ -22,7 +22,6 @@ export default function Login() {
   const [verContrasena, setVerContrasena] = useState(false)
   const [errores, setErrores] = useState({})
 
-  // Si ya hay sesión no tiene caso ver el login
   if (sesion) return <Navigate to="/" replace />
 
   const validar = () => {
@@ -40,7 +39,6 @@ export default function Login() {
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1.1fr 1fr' } }}>
-      {/* Panel izquierdo: marca (solo en pantallas medianas o grandes) */}
       <Box
         sx={{
           display: { xs: 'none', md: 'flex' },
@@ -62,10 +60,8 @@ export default function Login() {
         </Typography>
       </Box>
 
-      {/* Panel derecho: formulario */}
       <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', p: { xs: 3, sm: 6 }, bgcolor: 'background.paper' }}>
         <Box component="form" onSubmit={enviar} noValidate sx={{ width: '100%', maxWidth: 400 }}>
-          {/* En celular no se ve el panel azul, así que mostramos el logo aquí */}
           <Box component="img" src="/logo-nomi.png" alt="Nomi" sx={{ display: { xs: 'block', md: 'none' }, height: 56, mb: 3 }} />
 
           <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 600, letterSpacing: 1.5 }}>

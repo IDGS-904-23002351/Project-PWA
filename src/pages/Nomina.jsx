@@ -1,4 +1,3 @@
-// src/pages/Nomina.jsx
 import React, { useState, useEffect } from 'react';
 import {  
     Box, Typography, Button, TextField, InputAdornment,  
@@ -305,7 +304,6 @@ export default function Nomina() {
                 </Box>
             )}
 
-            {/* MODAL GENERAR PERIODO */}
             <Dialog open={openModalPeriodo} onClose={() => setOpenModalPeriodo(false)} maxWidth="sm" fullWidth>
                 <DialogTitle sx={{ fontWeight: 'bold' }}>Generar Periodo</DialogTitle>
                 <Box component="form" onSubmit={handleSubmitPeriodo}>
@@ -348,7 +346,6 @@ export default function Nomina() {
                 </Box>
             </Dialog>
 
-            {/* MODAL DETALLE RECIBO */}
             <Dialog open={openModalDetalle} onClose={() => setOpenModalDetalle(false)} maxWidth="md" fullWidth>
                 <DialogTitle sx={{ fontWeight: 'bold', bgcolor: '#f1f5f9' }}>Desglose de Recibo</DialogTitle>
                 <DialogContent dividers sx={{ p: 0 }}>

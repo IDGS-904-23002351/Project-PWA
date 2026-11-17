@@ -12,8 +12,6 @@ export default function CambiarTurnoModal({ open, onClose, onSaved, empleado, tu
 
   useEffect(() => {
     if (open && empleado) {
-      // 👈 FORZAMOS A QUE SEA UN STRING PARA QUE EL SELECT LO ENCUENTRE
-      // Si empleado.turno_id es 1 (número), lo convertimos a "1" (texto)
       const turnoActual = empleado.turno_id ? String(empleado.turno_id) : ''
       setNuevoTurno(turnoActual)
       setError('')
@@ -71,7 +69,6 @@ export default function CambiarTurnoModal({ open, onClose, onSaved, empleado, tu
           sx={{ mt: 1 }}
         >
           {turnos.map((t) => (
-            // 👈 NOS ASEGURAMOS DE QUE EL VALUE TAMBIÉN SEA STRING
             <MenuItem key={t.turno_id} value={String(t.turno_id)}>
               {t.nombre} ({t.horario})
             </MenuItem>

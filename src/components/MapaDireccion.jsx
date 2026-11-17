@@ -1,4 +1,3 @@
-// src/components/MapaDireccion.jsx
 import React, { useState, useEffect } from 'react'
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -6,7 +5,6 @@ import L from 'leaflet'
 import { Box, CircularProgress, TextField, InputAdornment, useMediaQuery, useTheme } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
 
-// Corregir icono por defecto de Leaflet en React
 delete L.Icon.Default.prototype._getIconUrl
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
@@ -29,11 +27,10 @@ export default function MapaDireccion({ onDireccionSeleccionada }) {
   const isSmUp = useMediaQuery(theme.breakpoints.up('sm'))
 
   const [position, setPosition] = useState(null)
-  const [center, setCenter] = useState([19.4326, -99.1332]) // CDMX por defecto
+  const [center, setCenter] = useState([19.4326, -99.1332])
   const [loading, setLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
-  // Función para obtener la dirección a partir de coordenadas (Geocodificación Inversa)
   const obtenerDireccion = async (lat, lng) => {
     setLoading(true)
     try {
@@ -60,14 +57,12 @@ export default function MapaDireccion({ onDireccionSeleccionada }) {
     }
   }
 
-  // Manejar el clic en el mapa
   const handleMapClick = (e) => {
     const { lat, lng } = e.latlng
     setPosition([lat, lng])
     obtenerDireccion(lat, lng)
   }
 
-  // Manejar la búsqueda por texto (Geocodificación Directa)
   const handleSearch = async (e) => {
     e.preventDefault()
     if (!searchQuery.trim()) return
@@ -96,7 +91,6 @@ export default function MapaDireccion({ onDireccionSeleccionada }) {
 
   return (
     <Box sx={{ position: 'relative', width: '100%', mb: 2 }}>
-      {/* Buscador sobre el mapa */}
       <Box component="form" onSubmit={handleSearch} sx={{ display: 'flex', gap: 1, mb: 1.5 }}>
         <TextField
           fullWidth
@@ -114,11 +108,10 @@ export default function MapaDireccion({ onDireccionSeleccionada }) {
         />
       </Box>
 
-      {/* Contenedor del mapa responsivo */}
       <Box
         sx={{
           position: 'relative',
-          height: isSmUp ? 320 : 240, // Responsivo: 320px en PC, 240px en móvil
+          height: isSmUp ? 320 : 240, 
           borderRadius: 1,
           overflow: 'hidden',
           border: '1px solid #e0e0e0',

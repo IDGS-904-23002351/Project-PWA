@@ -1,4 +1,3 @@
-// Textos amigables para los códigos de acción que guarda la tabla Auditoria
 const ETIQUETAS = {
   LOGIN_EXITOSO: 'Inicio de sesión',
   LOGIN_FALLIDO: 'Inicio de sesión fallido',
@@ -15,7 +14,6 @@ export function etiquetaAccion(codigo) {
   return texto.charAt(0).toUpperCase() + texto.slice(1)
 }
 
-// Color de la etiqueta: verde si salió bien, rojo si falló, azul para lo demás
 export function colorAccion(codigo) {
   if (codigo.includes('FALLIDO')) return 'error'
   if (codigo.includes('EXITOSO') || codigo.endsWith('_OK')) return 'success'

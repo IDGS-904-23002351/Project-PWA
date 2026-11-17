@@ -12,13 +12,11 @@ const initialState = {
   minutos_tolerancia: 10
 }
 
-// 👈 Recibimos el token como prop
 export default function CrearTurnoModal({ open, onClose, onSaved, token }) {
   const [form, setForm] = useState(initialState)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  // Limpiar el formulario cada vez que se abre
   useEffect(() => {
     if (open) {
       setForm(initialState)
@@ -45,7 +43,6 @@ export default function CrearTurnoModal({ open, onClose, onSaved, token }) {
 
     setLoading(true)
     try {
-      // 👈 Formateamos las horas a "HH:mm:ss" que es lo que espera SQL Server
       const formatearHora = (hora) => {
         if (!hora) return '00:00:00'
         return hora.length === 5 ? `${hora}:00` : hora
@@ -58,13 +55,11 @@ export default function CrearTurnoModal({ open, onClose, onSaved, token }) {
         minutos_tolerancia: Number(form.minutos_tolerancia) || 10
       }
 
-      // 👈 Pasamos el token y el payload
       await turnoApi.crearTurno(token, payload)
       
-      onSaved?.() // Esto recarga la lista en TurnosPage
+      onSaved?.()
       onClose()
     } catch (err) {
-      // Capturamos el error exacto que devuelve el backend
       const mensajeError = err?.response?.data?.mensaje || err?.response?.data?.detalle || err.message || 'Error al crear el turno'
       setError(mensajeError)
     } finally {

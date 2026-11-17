@@ -77,7 +77,6 @@ export default function TurnosPage() {
       
       setResumen(Array.isArray(resResumen) ? resResumen : [])
 
-      // 👈 LECTURA ORIGINAL (con plan B por si viene como Array)
       if (resAsignaciones?.asignaciones) {
         setAsignaciones(resAsignaciones.asignaciones)
         setTotal(resAsignaciones.total || 0)
@@ -99,7 +98,6 @@ export default function TurnosPage() {
 
   useEffect(() => {
     cargarDatos()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, pagina, turnoFiltro])
 
   const handleBuscarKeyPress = (e) => {

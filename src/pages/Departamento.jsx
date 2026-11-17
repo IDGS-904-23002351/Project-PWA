@@ -1,4 +1,3 @@
-// src/pages/Departamento.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
     Box, Typography, Button, TextField, InputAdornment, 

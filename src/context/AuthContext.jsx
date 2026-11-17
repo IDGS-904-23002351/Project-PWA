@@ -7,13 +7,11 @@ const MINUTOS_INACTIVIDAD = 15
 
 const AuthContext = createContext(null)
 
-// Lee la sesión guardada (si existe y no ha expirado)
 function leerSesion() {
   try {
     const guardada = JSON.parse(sessionStorage.getItem(CLAVE))
     if (guardada && new Date(guardada.expiracion) > new Date()) return guardada
   } catch {
-    /* sin sesión guardada */
   }
   return null
 }
@@ -38,7 +36,6 @@ function reducer(estado, accion) {
 export function AuthProvider({ children }) {
   const [estado, dispatch] = useReducer(reducer, estadoInicial)
 
-  // Guarda o borra la sesión del navegador cada vez que cambia
   useEffect(() => {
     if (estado.sesion) sessionStorage.setItem(CLAVE, JSON.stringify(estado.sesion))
     else sessionStorage.removeItem(CLAVE)
@@ -58,12 +55,11 @@ export function AuthProvider({ children }) {
     async (aviso) => {
       const token = estado.sesion?.token
       dispatch({ type: 'LOGOUT', aviso })
-      if (token) authApi.logout(token).catch(() => {}) // si falla, la sesión local ya se cerró
+      if (token) authApi.logout(token).catch(() => {})
     },
     [estado.sesion],
   )
 
-  // Cierra la sesión tras 15 minutos sin actividad (solo si hay sesión)
   useInactividad(
     MINUTOS_INACTIVIDAD * 60 * 1000,
     () => cerrarSesion('Tu sesión se cerró por inactividad.'),
@@ -78,8 +74,6 @@ export function AuthProvider({ children }) {
   return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>
 }
 
-// Hook para usar la sesión en cualquier componente
-// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const contexto = useContext(AuthContext)
   if (!contexto) throw new Error('useAuth debe usarse dentro de <AuthProvider>')

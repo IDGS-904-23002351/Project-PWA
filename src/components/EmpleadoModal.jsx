@@ -1,4 +1,3 @@
-// src/components/EmpleadoModal.jsx
 import React, { useEffect, useState } from 'react'
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
@@ -27,7 +26,6 @@ const initialState = {
   rol_id: '',
   nombre_usuario: '',
   contrasena: '',
-  // Dirección
   modo_direccion: 'nueva',
   dir_calle: '',
   dir_colonia: '',
@@ -53,10 +51,8 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
   const [turnos, setTurnos] = useState([])
   const [roles, setRoles] = useState([])
   const [direcciones, setDirecciones] = useState([])
-
   const esEdicion = Boolean(empleado?.id || empleado?.Id)
 
-  // ---------- Catálogos ----------
   useEffect(() => {
     if (!open || !token) return
     const cargarCatalogos = async () => {
@@ -82,7 +78,6 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
     cargarCatalogos()
   }, [open, token])
 
-  // ---------- Cargar datos en edición ----------
   useEffect(() => {
     if (!open) return
     if (esEdicion) {
@@ -146,7 +141,6 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
     return Number.isInteger(n) && n > 0 ? n : null
   }
 
-  // ---------- Payload idéntico al Postman ----------
   const construirPayload = () => {
     let direccion
     if (form.modo_direccion === 'nueva') {
@@ -154,7 +148,7 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
         Id: 0,
         calle: form.dir_calle?.trim() || '',
         colonia: form.dir_colonia?.trim() || '',
-        cuidad: form.dir_ciudad?.trim() || '', // "cuidad" es como lo define el backend
+        cuidad: form.dir_ciudad?.trim() || '', 
         estado: form.dir_estado?.trim() || '',
         pais: form.dir_pais?.trim() || 'México',
         codigo_postal: form.dir_cp?.trim() || '',

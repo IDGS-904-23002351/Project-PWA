@@ -22,7 +22,6 @@ import useApi from '../hooks/useApi'
 import { etiquetaRol, fechaCorta, iniciales } from '../utils/formato'
 import { colores } from '../theme'
 
-// Renglón "etiqueta / valor" de una tarjeta
 function Dato({ etiqueta, valor }) {
   return (
     <Box>
@@ -36,7 +35,6 @@ function Tarjeta({ titulo, children }) {
   return (
     <Paper variant="outlined" sx={{ p: 3 }}>
       <Typography sx={{ fontWeight: 700, mb: 2 }}>{titulo}</Typography>
-      {/* Los datos se acomodan según el ancho de la tarjeta (mínimo 180 px cada uno) */}
       <Box sx={{ display: 'grid', gap: 2.5, gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))' }}>
         {children}
       </Box>
@@ -44,8 +42,6 @@ function Tarjeta({ titulo, children }) {
   )
 }
 
-// Ventana para cambiar la contraseña. Al lograrlo el servidor cierra todas las sesiones,
-// así que se manda al usuario a iniciar sesión otra vez.
 function DialogoContrasena({ abierto, alCerrar }) {
   const llamar = useApi()
   const { cerrarSesion } = useAuth()
@@ -179,7 +175,6 @@ export default function Perfil() {
             <Alert severity="info">Esta cuenta no tiene un empleado asociado, por eso no hay datos de trabajo.</Alert>
           )}
 
-          {/* Celular: una tarjeta debajo de otra. Tablet (md): dos columnas. Pantalla grande (xl): tres. */}
           <Box sx={{ display: 'grid', gap: 2.5, alignItems: 'start', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', xl: 'repeat(3, 1fr)' } }}>
             <Tarjeta titulo="Datos personales">
               <Dato etiqueta="Número de empleado" valor={perfil.empleadoId} />

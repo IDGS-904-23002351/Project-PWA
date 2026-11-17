@@ -16,8 +16,6 @@ import Turno from '../pages/TurnosPage'
 import Nomina from '../pages/Nomina'
 import Reportes from '../pages/Reportes'
 
-// Los empleados consultan su asistencia, recibos y solicitudes en la app móvil.
-// En la web, las pantallas con datos de todo el personal son solo para ADMIN y RRHH.
 export default function AppRouter() {
   return (
     <Routes>

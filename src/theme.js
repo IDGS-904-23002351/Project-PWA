@@ -1,13 +1,11 @@
 import { createTheme } from '@mui/material/styles'
 
-// Colores de la marca Nomi (verde azulado, igual que el Figma y la app móvil).
-// Si cambian, solo se editan aquí.
 export const colores = {
-  primario: '#0F766E', // verde azulado (teal)
-  primarioOscuro: '#115E59', // hover de botones
-  primarioClaro: '#CCFBF1', // fondos suaves y chips
-  secundario: '#0284C7', // azul para datos informativos
-  exito: '#10B981', // verde
+  primario: '#0F766E',
+  primarioOscuro: '#115E59', 
+  primarioClaro: '#CCFBF1', 
+  secundario: '#0284C7', 
+  exito: '#10B981', 
   error: '#EF4444',
   fondo: '#F8FAFC',
   texto: '#0F172A',

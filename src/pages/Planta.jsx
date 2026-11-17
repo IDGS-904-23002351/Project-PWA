@@ -1,4 +1,3 @@
-// src/pages/Planta.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { 
     Box, Typography, Button, TextField, Paper, Divider, 
@@ -14,7 +13,6 @@ import { useAuth } from '../context/AuthContext';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 
-// Configuración de iconos de Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
     iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
@@ -63,14 +61,12 @@ export default function Planta() {
     const timeoutRef = useRef(null);
     const anioActual = new Date().getFullYear();
 
-    // Auto-cerrar alertas después de 5 segundos
     useEffect(() => {
         if (!mensaje.texto) return;
         const t = setTimeout(() => setMensaje({ tipo: '', texto: '' }), 5000);
         return () => clearTimeout(t);
     }, [mensaje]);
 
-    // Carga inicial
     const cargarDatos = async () => {
         if (!token) return;
         setLoading(true);
@@ -102,7 +98,6 @@ export default function Planta() {
 
     useEffect(() => { 
         cargarDatos(); 
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [token]);
 
     const obtenerDireccionSegura = (lat, lng) => {
@@ -152,8 +147,6 @@ export default function Planta() {
             setSavingUbicacion(false);
         }
     };
-
-    // ---------- REGENERAR QR ----------
     const handleRegenerarQR = async () => {
         if (!token) return;
         if (!ubicacion.id) {
@@ -174,7 +167,6 @@ export default function Planta() {
         }
     };
 
-    // ---------- GUARDAR DÍA FESTIVO ----------
     const handleGuardarFestivo = async (e) => {
         e.preventDefault();
         if (!token) return;
@@ -210,7 +202,6 @@ export default function Planta() {
         }
     };
 
-    // ---------- ELIMINAR DÍA FESTIVO ----------
     const handleEliminarFestivo = async (id) => {
         if (!token) return;
         if (!window.confirm('¿Estás seguro de eliminar este día festivo?')) return;
@@ -242,10 +233,8 @@ export default function Planta() {
 
             <Stack spacing={3}>
                 
-                {/* CONTENEDOR SUPERIOR: QR Y TABLA */}
                 <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3, alignItems: 'stretch', width: '100%' }}>
                     
-                    {/* 1. CÓDIGO QR */}
                     <Box sx={{ flex: { xs: '1 1 100%', md: '0 0 28%' } }}>
                         <Paper sx={{ 
                             p: { xs: 2, sm: 3 }, 
@@ -255,7 +244,6 @@ export default function Planta() {
                             flexDirection: 'column' 
                         }} elevation={0}>
                             
-                            {/* Ícono y Texto juntos a la izquierda */}
                             <Stack direction="row" spacing={1} alignItems="center" mb={2}>
                                 <QrCode2 sx={{ color: '#00897b', fontSize: 28 }} />
                                 <Typography variant="h6" fontWeight="bold" sx={{ m: 0, p: 0 }}>Código QR</Typography>
@@ -290,7 +278,6 @@ export default function Planta() {
                         </Paper>
                     </Box>
 
-                    {/* 2. DÍAS FESTIVOS */}
                     <Box sx={{ flex: 1, width: '100%' }}>
                         <Paper sx={{ 
                             p: { xs: 2, sm: 3 }, 
@@ -300,7 +287,6 @@ export default function Planta() {
                             flexDirection: 'column' 
                         }} elevation={0}>
                             
-                            {/* Encabezado: Stack con width 100% para forzar el espacio */}
                             <Stack 
                                 direction={{ xs: 'column', sm: 'row' }} 
                                 alignItems={{ xs: 'flex-start', sm: 'center' }} 
@@ -319,7 +305,7 @@ export default function Planta() {
                                         textTransform: 'none', 
                                         borderRadius: 2, 
                                         whiteSpace: 'nowrap', 
-                                        ml: { xs: 0, sm: 'auto' }, // 👈 Empuja el botón a la derecha
+                                        ml: { xs: 0, sm: 'auto' },
                                         mt: { xs: 1.5, sm: 0 } 
                                     }}>
                                     Nuevo día festivo
@@ -373,7 +359,6 @@ export default function Planta() {
                     </Box>
                 </Box>
 
-                {/* 3. CONFIGURACIÓN DE PLANTA */}
                 <Box sx={{ width: '100%' }}>
                     <Paper sx={{ p: { xs: 2, sm: 3, md: 4 }, borderRadius: 3, width: '100%', overflow: 'hidden' }} elevation={0}>
                         
@@ -442,7 +427,7 @@ export default function Planta() {
                                 </Box>
 
                                 <Typography variant="caption" color="textSecondary">
-                                    💡 Haz clic en el mapa o escribe lat/lng para mover el pin y actualizar la dirección automáticamente.
+                                    Haz clic en el mapa o escribe lat/lng para mover el pin y actualizar la dirección automáticamente.
                                 </Typography>
 
                                 <Box sx={{ width: '100%', height: isMdUp ? 350 : 250, borderRadius: 3, overflow: 'hidden', border: '1px solid #cbd5e1', position: 'relative' }}>
@@ -461,7 +446,6 @@ export default function Planta() {
                 </Box>
             </Stack>
 
-            {/* MODAL NUEVO / EDITAR FESTIVO */}
             <Dialog open={openModalFestivo} onClose={() => !savingFestivo && setOpenModalFestivo(false)} maxWidth="sm" fullWidth>
                 <DialogTitle sx={{ fontWeight: 'bold' }}>{nuevoFestivo.id ? 'Editar Día Festivo' : 'Registrar Nuevo Día Festivo'}</DialogTitle>
                 <Box component="form" onSubmit={handleGuardarFestivo}>

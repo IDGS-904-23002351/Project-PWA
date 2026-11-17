@@ -4,7 +4,6 @@ export const turnoApi = {
   obtenerResumen: async (token) => 
     peticion('/api/Turno/Resumen', { method: 'GET', token }),
     
-  // 👈 REGRESAMOS A LA URL CON SIGNOS DE INTERROGACIÓN
   listarAsignaciones: async (token, buscar = '', turno_id = '', departamento_id = '', pagina = 1, tamano_pagina = 10) => {
     const params = new URLSearchParams();
     if (buscar) params.append('buscar', buscar);
@@ -21,7 +20,6 @@ export const turnoApi = {
   crearTurno: async (token, data) => 
     peticion('/api/Turno/Crear', { method: 'POST', token, body: JSON.stringify(data) }),
     
-  // 👈 ARREGLADO PARA QUE RECIBA EL PAYLOAD DEL MODAL
   cambiarTurno: async (token, payload) => 
     peticion('/api/Turno/CambiarTurno', { method: 'PUT', token, body: JSON.stringify(payload) }),
     

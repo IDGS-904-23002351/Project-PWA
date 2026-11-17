@@ -1,7 +1,6 @@
 import { peticion } from './http'
 
 export const plantaQrApi = {
-  // ---------- UBICACIÓN ----------
   obtenerUbicacion: async (token) => {
     return peticion('/api/Ubicacion', { method: 'GET', token });
   },
@@ -14,8 +13,6 @@ export const plantaQrApi = {
     });
   },
 
-  // ---------- DISPOSITIVO QR ----------
-  // Corregido: el nombre tenía caracteres invisibles/tamil que rompían React
   obtenerQrVigente: async (token, ubicacionId) => {
     return peticion(`/api/DispositivoQR/${ubicacionId}`, { method: 'GET', token });
   },
@@ -28,7 +25,6 @@ export const plantaQrApi = {
     });
   },
 
-  // ---------- DÍAS FESTIVOS ----------
   listarDiasFestivos: async (token, anio) => {
     return peticion(`/api/DiaFestivo/${anio}`, { method: 'GET', token });
   },

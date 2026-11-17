@@ -28,7 +28,6 @@ import { fechaHora } from '../utils/formato'
 
 const FILTROS_VACIOS = { buscar: '', usuarioId: '', accion: '', desde: '', hasta: '' }
 
-// Resumen de lo que cambió: "antes → después" (solo si la acción guardó esos datos)
 function Cambio({ antes, despues }) {
   if (!antes && !despues) return <Typography color="text.secondary">—</Typography>
   const texto = antes && despues ? `${antes} → ${despues}` : antes || despues
@@ -45,21 +44,19 @@ export default function Bitacora() {
   const llamar = useApi()
   const [filtros, setFiltros] = useState(FILTROS_VACIOS)
   const [buscarAplicado, setBuscarAplicado] = useState('')
-  const [pagina, setPagina] = useState(0) // MUI cuenta desde 0, el servidor desde 1
+  const [pagina, setPagina] = useState(0) 
   const [tamano, setTamano] = useState(20)
   const [datos, setDatos] = useState({ registros: [], total: 0 })
   const [opciones, setOpciones] = useState({ acciones: [], usuarios: [] })
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
 
-  // Las opciones de los filtros se piden una sola vez
   useEffect(() => {
     llamar(obtenerFiltrosBitacora)
       .then(setOpciones)
-      .catch(() => {}) // si fallan, los filtros quedan vacíos pero la tabla sigue funcionando
+      .catch(() => {}) 
   }, [llamar])
 
-  // El texto de búsqueda se aplica medio segundo después de dejar de escribir
   useEffect(() => {
     const temporizador = setTimeout(() => {
       setBuscarAplicado(filtros.buscar)
@@ -89,7 +86,6 @@ export default function Bitacora() {
     cargar()
   }, [cargar])
 
-  // Cambia un filtro y regresa a la primera página
   const cambiar = (campo) => (e) => {
     setFiltros((anteriores) => ({ ...anteriores, [campo]: e.target.value }))
     setPagina(0)

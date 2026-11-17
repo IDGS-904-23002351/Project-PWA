@@ -1,4 +1,3 @@
-// src/api/empleadoApi.js
 import { peticion } from './http'
 
 export const empleadoApi = {

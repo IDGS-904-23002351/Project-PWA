@@ -40,7 +40,6 @@ export default function Header() {
         zIndex: 1100,
       }}
     >
-      {/* Buscador Global Dinámico */}
       <Box
         sx={{
           display: 'flex',
@@ -75,8 +74,6 @@ export default function Header() {
           ⌘ K
         </Box>
       </Box>
-
-      {/* Notificaciones y Perfil de Usuario */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <IconButton size="small" sx={{ color: '#64748b' }}>
           <Badge badgeContent={1} color="error" variant="dot">
