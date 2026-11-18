@@ -355,6 +355,7 @@ export default function Empleados() {
         open={detalleOpen}
         onClose={() => setDetalleOpen(false)}
         empleadoId={empleadoDetalleId}
+        token={sesion?.token}
       />
 
       <Dialog open={Boolean(confirmDelete)} onClose={() => setConfirmDelete(null)} fullWidth maxWidth="xs">

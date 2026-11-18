@@ -47,13 +47,13 @@ const fmtDireccion = (d) => {
   return d.id ? `ID: ${d.id}` : '—'
 }
 
-export default function EmpleadoDetalleModal({ open, onClose, empleadoId }) {
+export default function EmpleadoDetalleModal({ open, onClose, empleadoId, token }) {
   const [detalle, setDetalle] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    if (!open || !empleadoId) return
+    if (!open || !empleadoId || !token) return
     let cancelado = false
 
     const cargar = async () => {
@@ -61,7 +61,7 @@ export default function EmpleadoDetalleModal({ open, onClose, empleadoId }) {
       setError('')
       setDetalle(null)
       try {
-        const data = await empleadoApi.obtener(empleadoId)
+        const data = await empleadoApi.obtener(token, empleadoId)
         if (!cancelado) setDetalle(data?.empleado ?? data ?? null)
       } catch (err) {
         if (!cancelado) setError(err.message || 'No se pudo cargar el detalle')
@@ -72,7 +72,7 @@ export default function EmpleadoDetalleModal({ open, onClose, empleadoId }) {
 
     cargar()
     return () => { cancelado = true }
-  }, [open, empleadoId])
+  }, [open, empleadoId, token])
 
   const p = detalle?.persona_id || {}
   const d = p.direccion_id || {}
