@@ -22,8 +22,8 @@ export const departamentoApi = {
         });
     },
     eliminar: async (token, id) => {
-        return peticion(`/api/Departamento/${id}`, {
-            method: 'DELETE',
+        return peticion(`/api/Departamento/desactivar/${id}`, {
+            method: 'POST',
             token
         });
     }

@@ -70,14 +70,19 @@ export default function Departamentos() {
     };
 
     const handleEliminar = async (id) => {
-        if (!window.confirm('¿Estás seguro de eliminar este departamento?') || !sesion?.token) return;
+        if (!window.confirm('¿Estás seguro de desactivar este departamento?') || !sesion?.token) return;
         setMensaje({ tipo: '', texto: '' });
         try {
-            await departamentoApi.eliminar(sesion.token, id);
-            setMensaje({ tipo: 'success', texto: 'Departamento eliminado correctamente.' });
+            const respuesta = await departamentoApi.eliminar(sesion.token, id);
+            
+            // Si tu función peticion retorna directamente el JSON de respuesta:
+            setMensaje({ tipo: 'success', texto: respuesta.mensaje || 'Departamento desactivado correctamente.' });
             cargarDepartamentos();
         } catch (error) {
-            setMensaje({ tipo: 'error', texto: error.message || 'Error al eliminar el departamento.' });
+            // Aquí capturamos el mensaje que envió el backend (ej. "No se puede eliminar...")
+            // Dependiendo de cómo devuelva el error tu función 'peticion', intentamos extraer el texto:
+            const mensajeError = error.response?.data?.mensaje || error.message || 'Error al eliminar el departamento.';
+            setMensaje({ tipo: 'error', texto: mensajeError });
         }
     };
 
