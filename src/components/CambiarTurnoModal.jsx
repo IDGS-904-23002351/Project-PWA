@@ -9,32 +9,24 @@ export default function CambiarTurnoModal({ open, onClose, onSaved, empleado, tu
   const [nuevoTurno, setNuevoTurno] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [errorCampo, setErrorCampo] = useState('')
 
   useEffect(() => {
     if (open && empleado) {
-      const turnoActual = empleado.turno_id ? String(empleado.turno_id) : ''
-      setNuevoTurno(turnoActual)
+      setNuevoTurno(empleado.turno_id ? String(empleado.turno_id) : '')
       setError('')
+      setErrorCampo('')
     }
   }, [open, empleado])
 
   const handleSubmit = async () => {
     setError('')
+    setErrorCampo('')
 
-    if (!empleado?.id) {
-      setError('No se encontró el ID del empleado.')
-      return
-    }
-
-    if (!nuevoTurno) {
-      setError('Selecciona un turno.')
-      return
-    }
-
-    if (!token) {
-      setError('Sesión inválida. Vuelve a iniciar sesión.')
-      return
-    }
+    if (!empleado?.id) return setError('No se encontró el ID del empleado.')
+    if (!nuevoTurno) return setErrorCampo('Debes seleccionar un nuevo turno.')
+    if (String(empleado.turno_id) === String(nuevoTurno)) return setErrorCampo('El empleado ya tiene este turno asignado.')
+    if (!token) return setError('Sesión inválida.')
 
     setLoading(true)
     try {
@@ -44,12 +36,10 @@ export default function CambiarTurnoModal({ open, onClose, onSaved, empleado, tu
       }
 
       await turnoApi.cambiarTurno(token, payload)
-      
-      onSaved()
+      onSaved?.()
       onClose()
     } catch (err) {
-      const mensajeError = err?.response?.data?.mensaje || err?.response?.data?.detalle || err?.message || 'Error al cambiar el turno'
-      setError(mensajeError)
+      setError(err?.response?.data?.mensaje || err.message || 'Error al cambiar el turno')
     } finally {
       setLoading(false)
     }
@@ -61,12 +51,10 @@ export default function CambiarTurnoModal({ open, onClose, onSaved, empleado, tu
       <DialogContent dividers>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         <TextField
-          select
-          fullWidth
-          label="Nuevo Turno"
-          value={nuevoTurno}
-          onChange={(e) => setNuevoTurno(e.target.value)}
+          select fullWidth label="Nuevo Turno" value={nuevoTurno}
+          onChange={(e) => { setNuevoTurno(e.target.value); setErrorCampo(''); }}
           sx={{ mt: 1 }}
+          error={!!errorCampo} helperText={errorCampo}
         >
           {turnos.map((t) => (
             <MenuItem key={t.turno_id} value={String(t.turno_id)}>

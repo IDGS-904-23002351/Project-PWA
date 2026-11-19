@@ -5,49 +5,57 @@ import {
 } from '@mui/material'
 import { turnoApi } from '../api/turnoApi'
 
-const initialState = {
-  nombre: '',
-  hora_inicio: '',
-  hora_fin: '',
-  minutos_tolerancia: 10
-}
+const initialState = { nombre: '', hora_inicio: '', hora_fin: '', minutos_tolerancia: 10 }
 
 export default function CrearTurnoModal({ open, onClose, onSaved, token }) {
   const [form, setForm] = useState(initialState)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  
+  // 👈 NUEVO: Estado para errores por campo
+  const [errores, setErrores] = useState({})
 
   useEffect(() => {
     if (open) {
       setForm(initialState)
       setError('')
+      setErrores({})
     }
   }, [open])
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value })
+    const { name, value } = e.target
+    setForm({ ...form, [name]: value })
+    // Limpiar el error del campo al escribir
+    if (errores[name]) setErrores({ ...errores, [name]: '' })
   }
 
   const handleSubmit = async () => {
     setError('')
+    const nuevosErrores = {}
+
+    // Validaciones
+    if (!form.nombre.trim()) nuevosErrores.nombre = 'El nombre es obligatorio.'
+    if (!form.hora_inicio) nuevosErrores.hora_inicio = 'La hora de inicio es obligatoria.'
+    if (!form.hora_fin) nuevosErrores.hora_fin = 'La hora de fin es obligatoria.'
     
+    if (form.hora_inicio && form.hora_fin && form.hora_inicio >= form.hora_fin) {
+      nuevosErrores.hora_fin = 'La hora de fin debe ser mayor a la de inicio.'
+    }
+
+    if (Object.keys(nuevosErrores).length > 0) {
+      setErrores(nuevosErrores)
+      return
+    }
+
     if (!token) {
       setError('Sesión inválida. Vuelve a iniciar sesión.')
       return
     }
 
-    if (!form.nombre.trim() || !form.hora_inicio || !form.hora_fin) {
-      setError('El nombre, hora de inicio y hora de fin son obligatorios.')
-      return
-    }
-
     setLoading(true)
     try {
-      const formatearHora = (hora) => {
-        if (!hora) return '00:00:00'
-        return hora.length === 5 ? `${hora}:00` : hora
-      }
-
+      const formatearHora = (hora) => (!hora ? '00:00:00' : hora.length === 5 ? `${hora}:00` : hora)
       const payload = {
         nombre: form.nombre.trim(),
         hora_inicio: formatearHora(form.hora_inicio),
@@ -56,12 +64,10 @@ export default function CrearTurnoModal({ open, onClose, onSaved, token }) {
       }
 
       await turnoApi.crearTurno(token, payload)
-      
       onSaved?.()
       onClose()
     } catch (err) {
-      const mensajeError = err?.response?.data?.mensaje || err?.response?.data?.detalle || err.message || 'Error al crear el turno'
-      setError(mensajeError)
+      setError(err?.response?.data?.mensaje || err.message || 'Error al crear el turno')
     } finally {
       setLoading(false)
     }
@@ -76,44 +82,32 @@ export default function CrearTurnoModal({ open, onClose, onSaved, token }) {
         <Grid container spacing={2} sx={{ mt: 0.5 }}>
           <Grid item xs={12}>
             <TextField
-              fullWidth
-              label="Nombre del turno *"
-              name="nombre"
-              value={form.nombre}
-              onChange={handleChange}
+              fullWidth label="Nombre del turno *" name="nombre"
+              value={form.nombre} onChange={handleChange}
               placeholder="Ej. Matutino"
+              error={!!errores.nombre} helperText={errores.nombre}
             />
           </Grid>
           <Grid item xs={12} sm={6}>
             <TextField
-              fullWidth
-              label="Hora de inicio *"
-              name="hora_inicio"
-              type="time"
-              value={form.hora_inicio}
-              onChange={handleChange}
+              fullWidth label="Hora de inicio *" name="hora_inicio" type="time"
+              value={form.hora_inicio} onChange={handleChange}
               InputLabelProps={{ shrink: true }}
+              error={!!errores.hora_inicio} helperText={errores.hora_inicio}
             />
           </Grid>
           <Grid item xs={12} sm={6}>
             <TextField
-              fullWidth
-              label="Hora de fin *"
-              name="hora_fin"
-              type="time"
-              value={form.hora_fin}
-              onChange={handleChange}
+              fullWidth label="Hora de fin *" name="hora_fin" type="time"
+              value={form.hora_fin} onChange={handleChange}
               InputLabelProps={{ shrink: true }}
+              error={!!errores.hora_fin} helperText={errores.hora_fin}
             />
           </Grid>
           <Grid item xs={12}>
             <TextField
-              fullWidth
-              label="Minutos de tolerancia"
-              name="minutos_tolerancia"
-              type="number"
-              value={form.minutos_tolerancia}
-              onChange={handleChange}
+              fullWidth label="Minutos de tolerancia" name="minutos_tolerancia" type="number"
+              value={form.minutos_tolerancia} onChange={handleChange}
               inputProps={{ min: 0 }}
             />
           </Grid>

@@ -35,9 +35,7 @@ const initialState = {
   dir_cp: '',
 }
 
-const selectProps = {
-  displayEmpty: true,
-}
+const selectProps = { displayEmpty: true }
 
 export default function EmpleadoModal({ open, onClose, empleado, onSaved, token }) {
   const [form, setForm] = useState(initialState)
@@ -51,6 +49,7 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
   const [turnos, setTurnos] = useState([])
   const [roles, setRoles] = useState([])
   const [direcciones, setDirecciones] = useState([])
+  
   const esEdicion = Boolean(empleado?.id || empleado?.Id)
 
   useEffect(() => {
@@ -121,7 +120,11 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
   }, [open, empleado, esEdicion])
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value })
+    const { name, value } = e.target
+    setForm({ ...form, [name]: value })
+    if (erroresCampo[name]) {
+      setErroresCampo({ ...erroresCampo, [name]: '' })
+    }
   }
 
   const handleDireccionDesdeMapa = (datos) => {
@@ -141,30 +144,50 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
     return Number.isInteger(n) && n > 0 ? n : null
   }
 
+  const limpiarVacios = (obj) => {
+    const nuevo = {};
+    Object.keys(obj).forEach((key) => {
+      const valor = obj[key];
+      if (typeof valor === 'string' && valor.trim() === '') return;
+      if (valor === null || valor === undefined) return;
+      
+      if (typeof valor === 'object' && !Array.isArray(valor)) {
+        const objetoLimpio = limpiarVacios(valor);
+        if (Object.keys(objetoLimpio).length > 0) {
+          nuevo[key] = objetoLimpio;
+        }
+      } else {
+        nuevo[key] = valor;
+      }
+    });
+    return nuevo;
+  };
+
   const construirPayload = () => {
-    let direccion
-    if (form.modo_direccion === 'nueva') {
+    let direccion = { Id: 0 };
+    
+    if (form.modo_direccion === 'nueva' && form.dir_calle?.trim()) {
       direccion = {
         Id: 0,
-        calle: form.dir_calle?.trim() || '',
-        colonia: form.dir_colonia?.trim() || '',
-        cuidad: form.dir_ciudad?.trim() || '', 
-        estado: form.dir_estado?.trim() || '',
-        pais: form.dir_pais?.trim() || 'México',
-        codigo_postal: form.dir_cp?.trim() || '',
-      }
-    } else {
-      direccion = { Id: toInt(form.direccion_id) }
+        calle: form.dir_calle?.trim(),
+        colonia: form.dir_colonia?.trim(),
+        cuidad: form.dir_ciudad?.trim(),
+        estado: form.dir_estado?.trim(),
+        pais: form.dir_pais?.trim(),
+        codigo_postal: form.dir_cp?.trim(),
+      };
+    } else if (form.modo_direccion === 'existente') {
+      direccion = { Id: toInt(form.direccion_id) || 0 };
     }
 
     const persona = {
-      Nombre: form.nombre?.trim() || '',
-      Apellido_Paterno: form.apellido_Paterno?.trim() || '',
-      Apellido_Materno: form.apellido_Materno?.trim() || '',
-      correo: form.correo?.trim() || '',
-      telefono: form.telefono?.trim() || '',
+      Nombre: form.nombre?.trim(),
+      Apellido_Paterno: form.apellido_Paterno?.trim(),
+      Apellido_Materno: form.apellido_Materno?.trim(),
+      correo: form.correo?.trim(),
+      telefono: form.telefono?.trim(),
       direccion_id: direccion,
-    }
+    };
 
     const base = {
       persona_id: persona,
@@ -172,14 +195,16 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
       departamento_id: { Id: toInt(form.departamento_id) },
       turno_id: { Id: toInt(form.turno_id) },
       sede_id: { Id: toInt(form.sede_id) },
-      rfc: form.rfc?.trim()?.toUpperCase() || '',
-      curp: form.curp?.trim()?.toUpperCase() || '',
-      nss: form.nss?.trim() || '',
-      fecha_ingreso: form.fecha_ingreso,
-    }
+      rfc: form.rfc?.trim()?.toUpperCase(),
+      curp: form.curp?.trim()?.toUpperCase(),
+      nss: form.nss?.trim(),
+      fecha_ingreso: form.fecha_ingreso ? `${form.fecha_ingreso}T00:00:00` : null,
+    };
+
+    let payloadFinal;
 
     if (esEdicion) {
-      return {
+      payloadFinal = {
         ...base,
         Id: empleado.id || empleado.Id,
         persona_id: {
@@ -188,51 +213,74 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
         },
         usuarios_id: {
           rol_id: { Id: toInt(form.rol_id) },
-          nombre_usuario: form.nombre_usuario?.trim() || '',
+          nombre_usuario: form.nombre_usuario?.trim(),
         },
         estado: form.estado || 'ACTIVO',
-      }
+      };
+    } else {
+      payloadFinal = {
+        ...base,
+        usuarios_id: {
+          rol_id: { Id: toInt(form.rol_id) },
+          nombre_usuario: form.nombre_usuario?.trim(),
+          contrasena: form.contrasena,
+        },
+      };
     }
 
-    return {
-      ...base,
-      usuarios_id: {
-        rol_id: { Id: toInt(form.rol_id) },
-        nombre_usuario: form.nombre_usuario?.trim() || '',
-        contrasena: form.contrasena || '',
-      },
-    }
+    return limpiarVacios(payloadFinal);
   }
 
   const handleSubmit = async () => {
     setError('')
-    setErroresCampo({})
+    const nuevosErrores = {}
 
-    const faltantes = []
-    if (!toInt(form.empresa_id)) faltantes.push('Empresa')
-    if (!toInt(form.sede_id)) faltantes.push('Sede')
-    if (!toInt(form.departamento_id)) faltantes.push('Departamento')
-    if (!toInt(form.turno_id)) faltantes.push('Turno')
-    if (!form.nombre?.trim()) faltantes.push('Nombre')
-    if (!form.apellido_Paterno?.trim()) faltantes.push('Apellido paterno')
-    if (!form.rfc?.trim()) faltantes.push('RFC')
-    if (!form.curp?.trim()) faltantes.push('CURP')
+    if (!toInt(form.empresa_id)) nuevosErrores.empresa_id = 'La empresa es obligatoria.'
+    if (!toInt(form.sede_id)) nuevosErrores.sede_id = 'La sede es obligatoria.'
+    if (!toInt(form.departamento_id)) nuevosErrores.departamento_id = 'El departamento es obligatorio.'
+    if (!toInt(form.turno_id)) nuevosErrores.turno_id = 'El turno es obligatorio.'
+
+    if (!form.nombre?.trim()) nuevosErrores.nombre = 'El nombre es obligatorio.'
+    if (!form.apellido_Paterno?.trim()) nuevosErrores.apellido_Paterno = 'El apellido paterno es obligatorio.'
+
+    if (!form.rfc?.trim()) {
+      nuevosErrores.rfc = 'El RFC es obligatorio.'
+    } else if (form.rfc.trim().length !== 13) {
+      nuevosErrores.rfc = 'El RFC debe tener exactamente 13 caracteres.'
+    }
+
+    if (!form.curp?.trim()) {
+      nuevosErrores.curp = 'La CURP es obligatoria.'
+    } else if (form.curp.trim().length !== 18) {
+      nuevosErrores.curp = 'La CURP debe tener 18 caracteres.'
+    }
+
+    if (form.correo && !/\S+@\S+\.\S+/.test(form.correo)) {
+      nuevosErrores.correo = 'El formato del correo no es válido.'
+    }
+
+    if (form.telefono && form.telefono.replace(/\D/g, '').length !== 10) {
+      nuevosErrores.telefono = 'El teléfono debe tener 10 dígitos.'
+    }
 
     if (form.modo_direccion === 'existente' && !toInt(form.direccion_id)) {
-      faltantes.push('Dirección')
+      nuevosErrores.direccion_id = 'Debes seleccionar una dirección existente.'
     }
     if (form.modo_direccion === 'nueva' && !form.dir_calle?.trim()) {
-      faltantes.push('Calle de la nueva dirección')
+      nuevosErrores.dir_calle = 'La calle de la nueva dirección es obligatoria.'
     }
 
     if (!esEdicion) {
-      if (!toInt(form.rol_id)) faltantes.push('Rol')
-      if (!form.nombre_usuario?.trim()) faltantes.push('Nombre de usuario')
-      if (!form.contrasena?.trim()) faltantes.push('Contraseña')
+      if (!toInt(form.rol_id)) nuevosErrores.rol_id = 'El rol es obligatorio.'
+      if (!form.nombre_usuario?.trim()) nuevosErrores.nombre_usuario = 'El nombre de usuario es obligatorio.'
+      if (!form.contrasena || form.contrasena.length < 6) {
+        nuevosErrores.contrasena = 'La contraseña debe tener al menos 6 caracteres.'
+      }
     }
 
-    if (faltantes.length) {
-      setError(`Completa los campos obligatorios: ${faltantes.join(', ')}`)
+    if (Object.keys(nuevosErrores).length > 0) {
+      setErroresCampo(nuevosErrores)
+      setError('Por favor, corrige los errores marcados en rojo.')
       return
     }
 
@@ -244,26 +292,23 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
     setLoading(true)
     try {
       const payload = construirPayload()
-      console.log('PAYLOAD >>>', JSON.stringify(payload, null, 2))
-
+      console.log('PAYLOAD FINAL:', JSON.stringify(payload, null, 2))
+      
       if (esEdicion) {
         await empleadoApi.actualizar(token, empleado.id || empleado.Id, payload)
       } else {
         await empleadoApi.crear(token, payload)
       }
-
       onSaved?.()
       onClose()
     } catch (err) {
-      if (err.detalle?.errors) {
-        setErroresCampo(err.detalle.errors)
-        const mensajes = Object.entries(err.detalle.errors)
-          .map(([campo, msgs]) => `${campo}: ${msgs.join(', ')}`)
-          .join(' | ')
-        setError(mensajes)
-      } else {
-        setError(err.message || 'Error al guardar el empleado')
-      }
+      let msg = 'Error al guardar el empleado'
+      if (err?.response?.data?.inner) msg = err.response.data.inner
+      else if (err?.response?.data?.detalle) msg = err.response.data.detalle
+      else if (err?.response?.data?.mensaje) msg = err.response.data.mensaje
+      else if (err?.message) msg = err.message
+      
+      setError(msg)
     } finally {
       setLoading(false)
     }
@@ -278,43 +323,27 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
         <Typography variant="overline" color="textSecondary">Datos personales</Typography>
         <Grid container spacing={2} sx={{ mt: 0.5, mb: 2 }}>
           <Grid item xs={12} sm={4}>
-            <TextField fullWidth label="Nombre *" name="nombre" value={form.nombre} onChange={handleChange} />
+            <TextField fullWidth label="Nombre *" name="nombre" value={form.nombre} onChange={handleChange} error={!!erroresCampo.nombre} helperText={erroresCampo.nombre} />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <TextField fullWidth label="Apellido paterno *" name="apellido_Paterno" value={form.apellido_Paterno} onChange={handleChange} />
+            <TextField fullWidth label="Apellido paterno *" name="apellido_Paterno" value={form.apellido_Paterno} onChange={handleChange} error={!!erroresCampo.apellido_Paterno} helperText={erroresCampo.apellido_Paterno} />
           </Grid>
           <Grid item xs={12} sm={4}>
             <TextField fullWidth label="Apellido materno" name="apellido_Materno" value={form.apellido_Materno} onChange={handleChange} />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <TextField fullWidth label="Correo" name="correo" type="email" value={form.correo} onChange={handleChange} />
+            <TextField fullWidth label="Correo" name="correo" type="email" value={form.correo} onChange={handleChange} error={!!erroresCampo.correo} helperText={erroresCampo.correo} />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <TextField fullWidth label="Teléfono" name="telefono" value={form.telefono} onChange={handleChange} />
+            <TextField fullWidth label="Teléfono" name="telefono" value={form.telefono} onChange={handleChange} error={!!erroresCampo.telefono} helperText={erroresCampo.telefono} />
           </Grid>
 
           <Grid item xs={12}>
             <Divider sx={{ my: 1 }} />
-            <Typography variant="overline" color="textSecondary" sx={{ display: 'block', mb: 1 }}>
-              Dirección
-            </Typography>
+            <Typography variant="overline" color="textSecondary" sx={{ display: 'block', mb: 1 }}>Dirección</Typography>
             <Box sx={{ display: 'flex', gap: 1.5, mb: 1.5 }}>
-              <Button
-                size="small"
-                variant={form.modo_direccion === 'existente' ? 'contained' : 'outlined'}
-                onClick={() => setForm({ ...form, modo_direccion: 'existente' })}
-                sx={{ textTransform: 'none' }}
-              >
-                Usar existente
-              </Button>
-              <Button
-                size="small"
-                variant={form.modo_direccion === 'nueva' ? 'contained' : 'outlined'}
-                onClick={() => setForm({ ...form, modo_direccion: 'nueva' })}
-                sx={{ textTransform: 'none' }}
-              >
-                Nueva dirección
-              </Button>
+              <Button size="small" variant={form.modo_direccion === 'existente' ? 'contained' : 'outlined'} onClick={() => setForm({ ...form, modo_direccion: 'existente' })} sx={{ textTransform: 'none' }}>Usar existente</Button>
+              <Button size="small" variant={form.modo_direccion === 'nueva' ? 'contained' : 'outlined'} onClick={() => setForm({ ...form, modo_direccion: 'nueva' })} sx={{ textTransform: 'none' }}>Nueva dirección</Button>
             </Box>
           </Grid>
         </Grid>
@@ -322,24 +351,11 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
         {form.modo_direccion === 'existente' ? (
           <Grid container spacing={2} sx={{ mb: 3 }}>
             <Grid item xs={12} sm={6}>
-              <TextField
-                select
-                fullWidth
-                label="Dirección *"
-                name="direccion_id"
-                value={form.direccion_id}
-                onChange={handleChange}
-                SelectProps={selectProps}
-                sx={{ minWidth: 200 }}
-              >
+              <TextField select fullWidth label="Dirección *" name="direccion_id" value={form.direccion_id} onChange={handleChange} SelectProps={selectProps} sx={{ minWidth: 200 }} error={!!erroresCampo.direccion_id} helperText={erroresCampo.direccion_id}>
                 {direcciones.map((d) => {
                   const val = d.Id ?? d.id
                   const nom = d.nombre || d.Nombre || d.calle || `Dirección ${val}`
-                  return (
-                    <MenuItem key={val} value={val}>
-                      {nom}
-                    </MenuItem>
-                  )
+                  return <MenuItem key={val} value={val}>{nom}</MenuItem>
                 })}
               </TextField>
             </Grid>
@@ -352,7 +368,7 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
 
             <Grid container spacing={2} sx={{ mb: 3 }}>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="Calle" name="dir_calle" value={form.dir_calle} onChange={handleChange} />
+                <TextField fullWidth label="Calle" name="dir_calle" value={form.dir_calle} onChange={handleChange} error={!!erroresCampo.dir_calle} helperText={erroresCampo.dir_calle} />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField fullWidth label="Colonia" name="dir_colonia" value={form.dir_colonia} onChange={handleChange} />
@@ -377,37 +393,20 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
         <Typography variant="overline" color="textSecondary">Datos laborales</Typography>
         <Grid container spacing={2} sx={{ mt: 0.5, mb: 2 }}>
           <Grid item xs={12} sm={4}>
-            <TextField fullWidth label="RFC *" name="rfc" value={form.rfc} onChange={handleChange} />
+            <TextField fullWidth label="RFC *" name="rfc" value={form.rfc} onChange={handleChange} error={!!erroresCampo.rfc} helperText={erroresCampo.rfc} />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <TextField fullWidth label="CURP *" name="curp" value={form.curp} onChange={handleChange} />
+            <TextField fullWidth label="CURP *" name="curp" value={form.curp} onChange={handleChange} error={!!erroresCampo.curp} helperText={erroresCampo.curp} />
           </Grid>
           <Grid item xs={12} sm={4}>
             <TextField fullWidth label="NSS" name="nss" value={form.nss} onChange={handleChange} />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <TextField
-              fullWidth
-              label="Fecha de ingreso"
-              name="fecha_ingreso"
-              type="date"
-              value={form.fecha_ingreso}
-              onChange={handleChange}
-              InputLabelProps={{ shrink: true }}
-            />
+            <TextField fullWidth label="Fecha de ingreso" name="fecha_ingreso" type="date" value={form.fecha_ingreso} onChange={handleChange} InputLabelProps={{ shrink: true }} />
           </Grid>
 
           <Grid item xs={12} sm={4}>
-            <TextField
-              select
-              fullWidth
-              label="Empresa *"
-              name="empresa_id"
-              value={form.empresa_id}
-              onChange={handleChange}
-              SelectProps={selectProps}
-              sx={{ minWidth: 140 }}
-            >
+            <TextField select fullWidth label="Empresa *" name="empresa_id" value={form.empresa_id} onChange={handleChange} SelectProps={selectProps} sx={{ minWidth: 140 }} error={!!erroresCampo.empresa_id} helperText={erroresCampo.empresa_id}>
               {empresas.map((e) => {
                 const val = e.Id ?? e.id
                 return <MenuItem key={val} value={val}>{e.nombre || e.Nombre || e.razon_social}</MenuItem>
@@ -415,16 +414,7 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
             </TextField>
           </Grid>
           <Grid item xs={12} sm={4}>
-            <TextField
-              select
-              fullWidth
-              label="Sede *"
-              name="sede_id"
-              value={form.sede_id}
-              onChange={handleChange}
-              SelectProps={selectProps}
-              sx={{ minWidth: 140 }}
-            >
+            <TextField select fullWidth label="Sede *" name="sede_id" value={form.sede_id} onChange={handleChange} SelectProps={selectProps} sx={{ minWidth: 140 }} error={!!erroresCampo.sede_id} helperText={erroresCampo.sede_id}>
               {sedes.map((s) => {
                 const val = s.Id ?? s.id
                 return <MenuItem key={val} value={val}>{s.nombre || s.Nombre}</MenuItem>
@@ -432,16 +422,7 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
             </TextField>
           </Grid>
           <Grid item xs={12} sm={4}>
-            <TextField
-              select
-              fullWidth
-              label="Departamento *"
-              name="departamento_id"
-              value={form.departamento_id}
-              onChange={handleChange}
-              SelectProps={selectProps}
-              sx={{ minWidth: 160 }}
-            >
+            <TextField select fullWidth label="Departamento *" name="departamento_id" value={form.departamento_id} onChange={handleChange} SelectProps={selectProps} sx={{ minWidth: 160 }} error={!!erroresCampo.departamento_id} helperText={erroresCampo.departamento_id}>
               {departamentos.map((d) => {
                 const val = d.Id ?? d.id
                 return <MenuItem key={val} value={val}>{d.nombre || d.Nombre}</MenuItem>
@@ -449,16 +430,7 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
             </TextField>
           </Grid>
           <Grid item xs={12} sm={4}>
-            <TextField
-              select
-              fullWidth
-              label="Turno *"
-              name="turno_id"
-              value={form.turno_id}
-              onChange={handleChange}
-              SelectProps={selectProps}
-              sx={{ minWidth: 140 }}
-            >
+            <TextField select fullWidth label="Turno *" name="turno_id" value={form.turno_id} onChange={handleChange} SelectProps={selectProps} sx={{ minWidth: 140 }} error={!!erroresCampo.turno_id} helperText={erroresCampo.turno_id}>
               {turnos.map((t) => {
                 const val = t.Id ?? t.id
                 return <MenuItem key={val} value={val}>{t.nombre || t.Nombre}</MenuItem>
@@ -468,16 +440,7 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
 
           {esEdicion && (
             <Grid item xs={12} sm={4}>
-              <TextField
-                select
-                fullWidth
-                label="Estado"
-                name="estado"
-                value={form.estado}
-                onChange={handleChange}
-                SelectProps={selectProps}
-                sx={{ minWidth: 140 }}
-              >
+              <TextField select fullWidth label="Estado" name="estado" value={form.estado} onChange={handleChange} SelectProps={selectProps} sx={{ minWidth: 140 }}>
                 <MenuItem value="ACTIVO">Activo</MenuItem>
                 <MenuItem value="INACTIVO">Inactivo</MenuItem>
               </TextField>
@@ -491,16 +454,7 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
             <Typography variant="overline" color="textSecondary">Cuenta de usuario</Typography>
             <Grid container spacing={2} sx={{ mt: 0.5 }}>
               <Grid item xs={12} sm={4}>
-                <TextField
-                  select
-                  fullWidth
-                  label="Rol *"
-                  name="rol_id"
-                  value={form.rol_id}
-                  onChange={handleChange}
-                  SelectProps={selectProps}
-                  sx={{ minWidth: 140 }}
-                >
+                <TextField select fullWidth label="Rol *" name="rol_id" value={form.rol_id} onChange={handleChange} SelectProps={selectProps} sx={{ minWidth: 140 }} error={!!erroresCampo.rol_id} helperText={erroresCampo.rol_id}>
                   {roles.map((r) => {
                     const val = r.Id ?? r.id
                     return <MenuItem key={val} value={val}>{r.nombre || r.Nombre}</MenuItem>
@@ -508,23 +462,10 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
                 </TextField>
               </Grid>
               <Grid item xs={12} sm={4}>
-                <TextField
-                  fullWidth
-                  label="Nombre de usuario *"
-                  name="nombre_usuario"
-                  value={form.nombre_usuario}
-                  onChange={handleChange}
-                />
+                <TextField fullWidth label="Nombre de usuario *" name="nombre_usuario" value={form.nombre_usuario} onChange={handleChange} error={!!erroresCampo.nombre_usuario} helperText={erroresCampo.nombre_usuario} />
               </Grid>
               <Grid item xs={12} sm={4}>
-                <TextField
-                  fullWidth
-                  label="Contraseña *"
-                  name="contrasena"
-                  type="password"
-                  value={form.contrasena}
-                  onChange={handleChange}
-                />
+                <TextField fullWidth label="Contraseña *" name="contrasena" type="password" value={form.contrasena} onChange={handleChange} error={!!erroresCampo.contrasena} helperText={erroresCampo.contrasena} />
               </Grid>
             </Grid>
           </>
@@ -532,12 +473,7 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={loading}>Cancelar</Button>
-        <Button
-          onClick={handleSubmit}
-          variant="contained"
-          disabled={loading}
-          sx={{ bgcolor: '#00897b', '&:hover': { bgcolor: '#00695c' } }}
-        >
+        <Button onClick={handleSubmit} variant="contained" disabled={loading} sx={{ bgcolor: '#00897b', '&:hover': { bgcolor: '#00695c' } }}>
           {loading ? <CircularProgress size={20} color="inherit" /> : 'Guardar'}
         </Button>
       </DialogActions>
