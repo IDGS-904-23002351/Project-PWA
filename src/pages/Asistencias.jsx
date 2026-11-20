@@ -17,6 +17,9 @@ export default function Asistencias() {
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
   const [filtroEstado, setFiltroEstado] = useState('todos')
+  // Fecha local (no UTC) en formato yyyy-mm-dd; vacío = todas las fechas
+  const hoyLocal = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0]
+  const [filtroFecha, setFiltroFecha] = useState(hoyLocal)
   
   const [horaEntradaEdit, setHoraEntradaEdit] = useState('')
   const [estadoEdit, setEstadoEdit] = useState('')
@@ -82,9 +85,12 @@ export default function Asistencias() {
   }
 
   const handleExportarExcel = () => {
-    const headers = "Empleado,Entrada,Salida,Retardo,Método,Estado\n"
-    const rows = asistencias.map(a => `"${a.empleadoNombre || a.nombre || 'Empleado'}","${a.horaEntrada || '--'}","${a.horaSalida || '--'}","${a.retardo || '0 min'}","${a.metodo || 'GPS'}","${a.estado || 'Puntual'}"`).join("\n")
-    const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' })
+    const hora = (v) => (v ? v.split('T')[1]?.substring(0, 5) : '--')
+    const headers = "Fecha,Empleado,Entrada,Salida,Retardo,Método,Estado\n"
+    // Se exporta lo que se ve en la tabla (con los filtros aplicados)
+    const rows = asistenciasFiltradas.map(a => `"${String(a.fecha || '').split('T')[0]}","${a.empleadoNombre || a.nombre || 'Empleado'}","${hora(a.horaEntrada)}","${hora(a.horaSalida)}","${a.retardo || '0 min'}","${a.metodo || ''}","${a.estado || ''}"`).join("\n")
+    // \uFEFF al inicio: Excel reconoce los acentos
+    const blob = new Blob(['\uFEFF' + headers + rows], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
@@ -97,7 +103,8 @@ export default function Asistencias() {
   const asistenciasFiltradas = asistencias.filter(item => {
     const est = item.estado || ''
     const matchEstado = filtroEstado === 'todos' || est.toLowerCase() === filtroEstado.toLowerCase()
-    return matchEstado
+    const matchFecha = !filtroFecha || String(item.fecha || '').startsWith(filtroFecha)
+    return matchEstado && matchFecha
   })
 
   return (
@@ -113,7 +120,14 @@ export default function Asistencias() {
       />
 
       <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-        <TextField size="small" type="date" defaultValue={new Date().toISOString().split('T')[0]} sx={{ width: 170, bgcolor: 'white', borderRadius: 2 }} />
+        <TextField
+          size="small"
+          type="date"
+          value={filtroFecha}
+          onChange={(e) => setFiltroFecha(e.target.value)}
+          helperText={filtroFecha ? 'Borra la fecha para ver todas' : 'Todas las fechas'}
+          sx={{ width: 190, bgcolor: 'white', borderRadius: 2 }}
+        />
         <TextField select size="small" value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)} sx={{ width: 180, bgcolor: 'white', borderRadius: 2 }}>
           <MenuItem value="todos">Todos los estados</MenuItem>
           <MenuItem value="Puntual">Puntual</MenuItem>

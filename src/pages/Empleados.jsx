@@ -18,6 +18,8 @@ export default function Empleados() {
   const [empleados, setEmpleados] = useState([])
   const [buscar, setBuscar] = useState('')
   const [filtroEstado, setFiltroEstado] = useState('ACTIVO')
+  const [filtroDepartamento, setFiltroDepartamento] = useState('todos')
+  const [filtroTurno, setFiltroTurno] = useState('todos')
   const [loading, setLoading] = useState(false)
 
   const [modalOpen, setModalOpen] = useState(false)
@@ -36,7 +38,8 @@ export default function Empleados() {
     if (!sesion?.token) return
     setLoading(true)
     try {
-      const data = await empleadoApi.listar(sesion.token)
+      // El back pagina de 20 en 20: se piden todos para que la búsqueda y los filtros vean a todos
+      const data = await empleadoApi.listar(sesion.token, 'tamano_pagina=200')
       const lista = data?.empleados || (Array.isArray(data) ? data : [])
       setEmpleados(lista)
     } catch (error) {
@@ -140,8 +143,19 @@ export default function Empleados() {
       nombreCompleto.includes(buscar.toLowerCase()) ||
       rfc.toLowerCase().includes(buscar.toLowerCase())
 
-    return coincideEstado && coincideTexto
+    const depto = emp.departamento_id?.nombre || emp.departamento_id?.Nombre || ''
+    const turno = emp.turno_id?.nombre || emp.turno_id?.Nombre || ''
+    const coincideDepartamento = filtroDepartamento === 'todos' || depto === filtroDepartamento
+    const coincideTurno = filtroTurno === 'todos' || turno === filtroTurno
+
+    return coincideEstado && coincideTexto && coincideDepartamento && coincideTurno
   })
+
+  // Opciones de los filtros con los departamentos y turnos que sí tienen empleados
+  const opciones = (campo) =>
+    [...new Set(empleados.map((emp) => emp[campo]?.nombre || emp[campo]?.Nombre).filter(Boolean))].sort()
+  const departamentos = opciones('departamento_id')
+  const turnos = opciones('turno_id')
 
   return (
     <Box sx={{ width: '100%', boxSizing: 'border-box', pb: 4 }}>
@@ -183,12 +197,13 @@ export default function Empleados() {
             }}
             sx={{ flex: 1 }}
           />
-          <Select size="small" defaultValue="todos" sx={{ minWidth: 180 }}>
+          <Select size="small" value={filtroDepartamento} onChange={(e) => setFiltroDepartamento(e.target.value)} sx={{ minWidth: 180 }}>
             <MenuItem value="todos">Todos los departamentos</MenuItem>
+            {departamentos.map((d) => <MenuItem key={d} value={d}>{d}</MenuItem>)}
           </Select>
-          <Select size="small" defaultValue="todos" sx={{ minWidth: 150 }}>
-            <MenuItem value="todos">Todos los tipos</MenuItem>
-            <MenuItem value="operativo">Operativo</MenuItem>
+          <Select size="small" value={filtroTurno} onChange={(e) => setFiltroTurno(e.target.value)} sx={{ minWidth: 150 }}>
+            <MenuItem value="todos">Todos los turnos</MenuItem>
+            {turnos.map((t) => <MenuItem key={t} value={t}>{t}</MenuItem>)}
           </Select>
           <Select
             size="small"
@@ -207,10 +222,10 @@ export default function Empleados() {
         <Table sx={{ minWidth: 650 }}>
           <TableHead sx={{ bgcolor: '#f8fafc' }}>
             <TableRow>
-              {['EMPLEADO', 'PUESTO', 'DEPARTAMENTO', 'TIPO', 'TURNO', 'ESTATUS', 'ACCIONES'].map((h, i) => (
+              {['EMPLEADO', 'PUESTO', 'DEPARTAMENTO', 'TURNO', 'ESTATUS', 'ACCIONES'].map((h, i) => (
                 <TableCell
                   key={h}
-                  align={i === 6 ? 'right' : 'left'}
+                  align={i === 5 ? 'right' : 'left'}
                   sx={{ fontWeight: 700, color: 'text.secondary', fontSize: '0.75rem', textAlign: 'center' }}
                 >
                   {h}
@@ -221,13 +236,13 @@ export default function Empleados() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={7} align="center" sx={{ py: 5 }}>
+                <TableCell colSpan={6} align="center" sx={{ py: 5 }}>
                   <CircularProgress size={28} sx={{ color: '#0f766e' }} />
                 </TableCell>
               </TableRow>
             ) : empleadosFiltrados.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} align="center" sx={{ py: 5, color: 'text.secondary' }}>
+                <TableCell colSpan={6} align="center" sx={{ py: 5, color: 'text.secondary' }}>
                   No hay empleados para mostrar.
                 </TableCell>
               </TableRow>
@@ -265,17 +280,6 @@ export default function Empleados() {
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2">{depto}</Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={turno === 'Matutino' ? 'Operativo' : 'Administrativo'}
-                          size="small"
-                          sx={{
-                            bgcolor: turno === 'Matutino' ? '#ccfbf1' : '#e0f2fe',
-                            color: turno === 'Matutino' ? '#0f766e' : '#0369a1',
-                            fontWeight: 600,
-                          }}
-                        />
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2">{turno}</Typography>

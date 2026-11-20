@@ -22,6 +22,10 @@ export default function Inicio() {
     month: 'long',
   })
 
+  const esEmpleado = sesion?.usuario?.rol === 'EMPLEADO'
+  const horaActual = hoy.getHours()
+  const saludo = horaActual < 12 ? 'Buenos días' : horaActual < 19 ? 'Buenas tardes' : 'Buenas noches'
+
   useEffect(() => {
     async function cargarMetricas() {
       try {
@@ -35,10 +39,13 @@ export default function Inicio() {
         setCargando(false)
       }
     }
-    if (sesion?.token) {
+    // Las métricas son de toda la empresa: solo ADMIN y RRHH
+    if (sesion?.token && !esEmpleado) {
       cargarMetricas()
+    } else {
+      setCargando(false)
     }
-  }, [sesion?.token])
+  }, [sesion?.token, esEmpleado])
 
   const handleDescargarReporte = () => {
     if (!metricas) return
@@ -49,7 +56,7 @@ Retardos Hoy,${metricas.retardosHoy ?? 0}
 Faltas Hoy,${metricas.faltasHoy ?? 0}
 Solicitudes Pendientes,${metricas.solicitudesPendientes ?? 0}`
 
-    const blob = new Blob([contenidoCsv], { type: 'text/csv;charset=utf-8;' })
+    const blob = new Blob(['\uFEFF' + contenidoCsv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
@@ -59,10 +66,32 @@ Solicitudes Pendientes,${metricas.solicitudesPendientes ?? 0}`
     document.body.removeChild(link)
   }
 
+  if (esEmpleado) {
+    return (
+      <Box sx={{ width: '100%', boxSizing: 'border-box', pb: 4 }}>
+        <EncabezadoPagina
+          titulo={`${saludo}, ${sesion?.usuario?.nombre || 'Usuario'}`}
+          descripcion={<span style={{ textTransform: 'capitalize' }}>{fechaFormateada}</span>}
+        />
+        <Paper variant="outlined" sx={{ p: 3, borderRadius: 3 }}>
+          <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>Usa la app móvil Nomi</Typography>
+          <Typography color="text.secondary">
+            Desde la app registras tu entrada y salida con el código QR, consultas tus recibos de nómina,
+            pides vacaciones o permisos y recibes las respuestas de Recursos Humanos.
+            Aquí en la web puedes ver tu perfil y cambiar tu contraseña.
+          </Typography>
+          <Button variant="contained" sx={{ mt: 2, textTransform: 'none' }} onClick={() => navigate('/perfil')}>
+            Ir a mi perfil
+          </Button>
+        </Paper>
+      </Box>
+    )
+  }
+
   return (
     <Box sx={{ width: '100%', boxSizing: 'border-box', pb: 4 }}>
       <EncabezadoPagina
-        titulo={`Buenos días, ${sesion?.usuario?.nombre || 'Usuario'}`}
+        titulo={`${saludo}, ${sesion?.usuario?.nombre || 'Usuario'}`}
         descripcion={
           <>
             Aquí tienes el resumen de Calzado Alba para hoy, <span style={{ textTransform: 'capitalize' }}>{fechaFormateada}</span>.

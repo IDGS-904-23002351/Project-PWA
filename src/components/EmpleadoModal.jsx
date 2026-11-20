@@ -247,12 +247,23 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
       nuevosErrores.rfc = 'El RFC es obligatorio.'
     } else if (form.rfc.trim().length !== 13) {
       nuevosErrores.rfc = 'El RFC debe tener exactamente 13 caracteres.'
+    } else if (!/^[A-ZÑ&]{4}\d{6}[A-Z0-9]{3}$/i.test(form.rfc.trim())) {
+      // 4 letras + fecha de nacimiento AAMMDD + homoclave de 3
+      nuevosErrores.rfc = 'El RFC no tiene un formato válido (ej. GOMA850101AB1).'
     }
 
     if (!form.curp?.trim()) {
       nuevosErrores.curp = 'La CURP es obligatoria.'
     } else if (form.curp.trim().length !== 18) {
       nuevosErrores.curp = 'La CURP debe tener 18 caracteres.'
+    } else if (!/^[A-Z]{4}\d{6}[HMX][A-Z]{5}[A-Z0-9]\d$/i.test(form.curp.trim())) {
+      // 4 letras + AAMMDD + sexo (H/M/X) + estado (2) + consonantes (3) + homoclave + dígito
+      nuevosErrores.curp = 'La CURP no tiene un formato válido.'
+    }
+
+    // NSS opcional; si se escribe son 11 dígitos
+    if (form.nss?.trim() && !/^\d{11}$/.test(form.nss.trim())) {
+      nuevosErrores.nss = 'El NSS debe tener 11 dígitos.'
     }
 
     if (form.correo && !/\S+@\S+\.\S+/.test(form.correo)) {
@@ -399,7 +410,7 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
             <TextField fullWidth label="CURP *" name="curp" value={form.curp} onChange={handleChange} error={!!erroresCampo.curp} helperText={erroresCampo.curp} />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <TextField fullWidth label="NSS" name="nss" value={form.nss} onChange={handleChange} />
+            <TextField fullWidth label="NSS" name="nss" value={form.nss} onChange={handleChange} error={!!erroresCampo.nss} helperText={erroresCampo.nss} />
           </Grid>
           <Grid item xs={12} sm={4}>
             <TextField fullWidth label="Fecha de ingreso" name="fecha_ingreso" type="date" value={form.fecha_ingreso} onChange={handleChange} InputLabelProps={{ shrink: true }} />

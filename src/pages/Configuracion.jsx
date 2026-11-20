@@ -18,8 +18,8 @@ import { fechaHora } from '../utils/formato'
 
 const EDITABLES = {
   TOLERANCIA_RETARDO_MIN: {
-    titulo: 'Tolerancia de retardo',
-    ayuda: 'Minutos después de la hora de entrada antes de marcar retardo (0 a 120).',
+    titulo: 'Tolerancia de retardo por defecto',
+    ayuda: 'Cada turno tiene su propia tolerancia (en Turnos). Esta solo se usa si un turno no la tiene (0 a 120 min).',
     unidad: 'min',
   },
   MINUTOS_SESION: {

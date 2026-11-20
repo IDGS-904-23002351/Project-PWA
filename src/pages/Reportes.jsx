@@ -7,27 +7,56 @@ import {
 } from '@mui/material';
 import { Download, CheckCircle, AccessTime, History, Description } from '@mui/icons-material';
 import { reportesApi } from '../api/reportesApi';
+import { departamentoApi } from '../api/departamentoApi';
 import { useAuth } from '../context/AuthContext';
 import EncabezadoPagina from '../components/EncabezadoPagina';
+
+// Fecha local en formato yyyy-mm-dd (toISOString usa UTC y en la noche da el día siguiente)
+const aTexto = (fecha) => new Date(fecha.getTime() - fecha.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+
+// Por defecto: del lunes de esta semana a hoy
+const lunesDeEstaSemana = () => {
+  const d = new Date();
+  const dia = d.getDay() === 0 ? 7 : d.getDay();
+  d.setDate(d.getDate() - (dia - 1));
+  return d;
+};
 
 export default function Reportes() {
   const { sesion } = useAuth();
   const token = sesion?.token;
-  const [fechaInicio, setFechaInicio] = useState('2026-10-01');
-  const [fechaFin, setFechaFin] = useState('2026-10-07');
+  const [fechaInicio, setFechaInicio] = useState(aTexto(lunesDeEstaSemana()));
+  const [fechaFin, setFechaFin] = useState(aTexto(new Date()));
   const [departamentoId, setDepartamentoId] = useState('todos');
+  const [departamentos, setDepartamentos] = useState([]);
   
   const [activeTab, setActiveTab] = useState('asistencia'); 
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'error' });
+  // Departamentos activos para el filtro
+  useEffect(() => {
+    if (!token) return;
+    departamentoApi.listar(token)
+      .then((lista) => setDepartamentos((Array.isArray(lista) ? lista : []).filter((d) => (d.estado || 'ACTIVO') === 'ACTIVO')))
+      .catch(() => setDepartamentos([]));
+  }, [token]);
+
   const handleAplicarFiltros = async () => {
     if (!token) return;
+    if (!fechaInicio || !fechaFin) {
+      setSnackbar({ open: true, message: 'Elige la fecha de inicio y la de fin.', severity: 'warning' });
+      return;
+    }
+    if (fechaFin < fechaInicio) {
+      setSnackbar({ open: true, message: 'La fecha de fin no puede ser antes que la de inicio.', severity: 'warning' });
+      return;
+    }
     setLoading(true);
   
     const filtros = {
-      fechaInicio: fechaInicio ? new Date(fechaInicio + 'T12:00:00').toISOString() : null,
-      fechaFin: fechaFin ? new Date(fechaFin + 'T12:00:00').toISOString() : null,
+      fechaInicio,
+      fechaFin,
       departamentoId: departamentoId !== 'todos' ? parseInt(departamentoId) : null
     };
 
@@ -180,6 +209,67 @@ export default function Reportes() {
     }
   };
 
+  // Filas del reporte actual como texto, en el mismo orden que las columnas
+  const filasParaExportar = () => {
+    const dinero = (n) => `$${Number(n ?? 0).toFixed(2)}`;
+    return data.map((item) => {
+      switch (activeTab) {
+        case 'asistencia': return [item.nombreEmpleado, item.diasLaborados ?? 0, item.totalRetardos ?? 0, item.totalFaltas ?? 0, `${item.totalHorasExtra ?? 0} h`];
+        case 'faltas': return [`${item.nombreEmpleado} (${item.departamento || 'N/A'})`, item.totalAsistencias ?? 0, item.totalRetardos ?? 0, `${item.minutosRetardo ?? 0} min`, item.totalFaltas ?? 0];
+        case 'horas': return [`${item.nombreEmpleado} (${item.departamento || 'N/A'})`, `${item.totalHoras ?? 0} h`, `${item.horasPendientes ?? 0} h`, `${item.horasAutorizadas ?? 0} h`];
+        case 'nomina': return [`${item.nombreEmpleado} (${item.periodo || 'N/A'})`, dinero(item.percepciones), dinero(item.deducciones), dinero(item.netoAPagar)];
+        default: return [];
+      }
+    });
+  };
+
+  const nombreReporte = () => `${tarjetas.find((t) => t.id === activeTab)?.title || 'Reporte'} ${fechaInicio} a ${fechaFin}`;
+
+  // Excel: CSV con \uFEFF para que Excel lea bien los acentos
+  const exportarExcel = () => {
+    if (data.length === 0) {
+      setSnackbar({ open: true, message: 'No hay datos para exportar.', severity: 'warning' });
+      return;
+    }
+    const columnas = getColumnas().filter(Boolean);
+    const celda = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const csv = [columnas, ...filasParaExportar()].map((fila) => fila.map(celda).join(',')).join('\n');
+    const url = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${nombreReporte()}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  // PDF: abre una ventana con la tabla y el diálogo de impresión ("Guardar como PDF")
+  const exportarPdf = () => {
+    if (data.length === 0) {
+      setSnackbar({ open: true, message: 'No hay datos para exportar.', severity: 'warning' });
+      return;
+    }
+    const escapar = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const columnas = getColumnas().filter(Boolean);
+    const filas = filasParaExportar().map((f) => `<tr>${f.map((c) => `<td>${escapar(c)}</td>`).join('')}</tr>`).join('');
+    const ventana = window.open('', '_blank');
+    if (!ventana) {
+      setSnackbar({ open: true, message: 'Permite las ventanas emergentes para exportar a PDF.', severity: 'warning' });
+      return;
+    }
+    ventana.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${escapar(nombreReporte())}</title>
+      <style>body{font-family:Arial,sans-serif;margin:24px;color:#102a43}h1{font-size:18px;margin:0}p{color:#5b6b7b;margin:4px 0 16px}
+      table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #e5eaf0;padding:6px 8px;text-align:left}th{background:#e5f4f3}</style>
+      </head><body><h1>Nomi · ${escapar(tarjetas.find((t) => t.id === activeTab)?.title)}</h1>
+      <p>Calzado Alba · del ${escapar(fechaInicio)} al ${escapar(fechaFin)} · ${data.length} registros</p>
+      <table><thead><tr>${columnas.map((c) => `<th>${escapar(c)}</th>`).join('')}</tr></thead><tbody>${filas}</tbody></table>
+      </body></html>`);
+    ventana.document.close();
+    ventana.focus();
+    ventana.print();
+  };
+
   return (
     <Box sx={{ width: '100%', boxSizing: 'border-box', pb: 4 }}>
       <EncabezadoPagina
@@ -187,10 +277,10 @@ export default function Reportes() {
         descripcion="Consulta y exporta información de tu operación."
         acciones={
           <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button variant="outlined" startIcon={<Download />} sx={{ textTransform: 'none', borderRadius: 2, color: '#64748b', borderColor: '#cbd5e1' }}>
+            <Button variant="outlined" startIcon={<Download />} onClick={exportarPdf} sx={{ textTransform: 'none', borderRadius: 2, color: '#64748b', borderColor: '#cbd5e1' }}>
               PDF
             </Button>
-            <Button variant="outlined" startIcon={<Download />} sx={{ textTransform: 'none', borderRadius: 2, color: '#64748b', borderColor: '#cbd5e1' }}>
+            <Button variant="outlined" startIcon={<Download />} onClick={exportarExcel} sx={{ textTransform: 'none', borderRadius: 2, color: '#64748b', borderColor: '#cbd5e1' }}>
               Excel
             </Button>
           </Box>
@@ -251,6 +341,9 @@ export default function Reportes() {
           sx={{ minWidth: 180, borderRadius: 2, bgcolor: '#fff' }}
         >
           <MenuItem value="todos">Todos los departamentos</MenuItem>
+          {departamentos.map((d) => (
+            <MenuItem key={d.id} value={String(d.id)}>{d.nombre}</MenuItem>
+          ))}
         </Select>
 
         <Button

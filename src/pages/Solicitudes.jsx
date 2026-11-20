@@ -207,6 +207,7 @@ export default function Solicitudes() {
                   <TextField
                     label="Comentario para el empleado (opcional)"
                     placeholder="Escribe un comentario..."
+                    helperText="El empleado lo verá en la notificación de la app."
                     multiline
                     rows={3}
                     fullWidth
