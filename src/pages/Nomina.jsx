@@ -21,7 +21,9 @@ export default function Nomina() {
     const [periodos, setPeriodos] = useState([]);
     const [buscarPeriodo, setBuscarPeriodo] = useState('');
     const [openModalPeriodo, setOpenModalPeriodo] = useState(false);
-    const [formPeriodo, setFormPeriodo] = useState({ nombre: '', tipoPeriodoId: 1, fechaInicio: '', fechaFin: '', fechaPago: '' });
+    // Los id son los de la tabla TipoPeriodo: 1 SEMANAL, 2 QUINCENAL, 3 MENSUAL
+    const periodoVacio = { nombre: '', tipoPeriodoId: 2, fechaInicio: '', fechaFin: '', fechaPago: '' };
+    const [formPeriodo, setFormPeriodo] = useState(periodoVacio);
 
     const [periodoSeleccionadoId, setPeriodoSeleccionadoId] = useState('');
     const [listaNominasCalculadas, setListaNominasCalculadas] = useState([]);
@@ -68,6 +70,7 @@ export default function Nomina() {
             await nominaApi.guardarPeriodo(token, formPeriodo);
             setMensaje({ tipo: 'success', texto: 'Periodo generado correctamente.' });
             setOpenModalPeriodo(false);
+            setFormPeriodo(periodoVacio);
             cargarPeriodos();
         } catch (error) {
             setMensaje({ tipo: 'error', texto: error.message || 'Error al procesar.' });
@@ -78,8 +81,9 @@ export default function Nomina() {
         if (!window.confirm('¿Cerrar y pagar este periodo?')) return;
         try {
             await nominaApi.cerrarPeriodo(token, id);
-            setMensaje({ tipo: 'success', texto: 'Periodo cerrado correctamente.' });
+            setMensaje({ tipo: 'success', texto: 'Periodo cerrado correctamente. Los empleados ya pueden ver su recibo en la app.' });
             cargarPeriodos();
+            if (periodoSeleccionadoId) cargarNominaPorPeriodo(periodoSeleccionadoId);
         } catch (error) {
             setMensaje({ tipo: 'error', texto: error.message || 'Error al cerrar.' });
         }
@@ -101,9 +105,10 @@ export default function Nomina() {
 
         setMensaje({ tipo: '', texto: 'Calculando...' });
         try {
-            await nominaApi.calcularNominaPeriodo(token, periodoSeleccionadoId);
-            setMensaje({ tipo: 'success', texto: 'Cálculo de nómina ejecutado exitosamente.' });
+            const r = await nominaApi.calcularNominaPeriodo(token, periodoSeleccionadoId);
+            setMensaje({ tipo: 'success', texto: r?.mensaje || 'Cálculo de nómina ejecutado exitosamente.' });
             cargarNominaPorPeriodo(periodoSeleccionadoId);
+            cargarPeriodos();
         } catch (error) {
             setMensaje({ tipo: 'error', texto: error.message || 'Error al calcular la nómina.' });
         }
@@ -119,6 +124,13 @@ export default function Nomina() {
             setMensaje({ tipo: 'error', texto: 'No se pudo obtener el detalle.' });
         }
     };
+
+    const dinero = (v) => `$${Number(v ?? 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const colorEstado = (estado) => estado === 'CERRADO'
+        ? { bgcolor: '#ffebee', color: '#c62828' }
+        : estado === 'CALCULADO'
+            ? { bgcolor: '#e3f2fd', color: '#1565c0' }
+            : { bgcolor: '#e0f2f1', color: '#00796b' };
 
     const periodosFiltrados = periodos.filter(p => p.nombre?.toLowerCase().includes(buscarPeriodo.toLowerCase()) || p.estado?.toLowerCase().includes(buscarPeriodo.toLowerCase()));
 
@@ -180,6 +192,7 @@ export default function Nomina() {
                             <TableHead sx={{ bgcolor: '#f8fafc' }}>
                                 <TableRow>
                                     <TableCell sx={{ fontWeight: 'bold' }}>NOMBRE</TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>TIPO</TableCell>
                                     <TableCell sx={{ fontWeight: 'bold' }}>INICIO</TableCell>
                                     <TableCell sx={{ fontWeight: 'bold' }}>FIN</TableCell>
                                     <TableCell sx={{ fontWeight: 'bold' }}>PAGO</TableCell>
@@ -191,11 +204,12 @@ export default function Nomina() {
                                 {periodosFiltrados.map((p) => (
                                     <TableRow key={p.id} hover>
                                         <TableCell><Typography variant="subtitle2" fontWeight="bold">{p.nombre}</Typography></TableCell>
+                                        <TableCell>{p.tipoPeriodoNombre}</TableCell>
                                         <TableCell>{p.fechaInicio?.split('T')[0]}</TableCell>
                                         <TableCell>{p.fechaFin?.split('T')[0]}</TableCell>
                                         <TableCell>{p.fechaPago?.split('T')[0] || 'N/A'}</TableCell>
                                         <TableCell>
-                                            <Chip label={p.estado} size="small" sx={{ bgcolor: p.estado === 'CERRADO' ? '#ffebee' : '#e0f2f1', color: p.estado === 'CERRADO' ? '#c62828' : '#00796b', fontWeight: 'bold' }} />
+                                            <Chip label={p.estado} size="small" sx={{ ...colorEstado(p.estado), fontWeight: 'bold' }} />
                                         </TableCell>
                                         <TableCell align="right">
                                             <Tooltip title="Cerrar Periodo">
@@ -267,7 +281,9 @@ export default function Nomina() {
                                 <TableRow>
                                     <TableCell sx={{ fontWeight: 'bold' }}>EMPLEADO</TableCell>
                                     <TableCell sx={{ fontWeight: 'bold' }}>RFC</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>DÍAS</TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>DÍAS PAGADOS</TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>FALTAS</TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>RETARDOS</TableCell>
                                     <TableCell sx={{ fontWeight: 'bold' }}>PERCEPCIONES</TableCell>
                                     <TableCell sx={{ fontWeight: 'bold' }}>DEDUCCIONES</TableCell>
                                     <TableCell sx={{ fontWeight: 'bold' }}>NETO</TableCell>
@@ -277,7 +293,7 @@ export default function Nomina() {
                             <TableBody>
                                 {listaNominasCalculadas.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={7} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                                        <TableCell colSpan={9} align="center" sx={{ py: 4, color: 'text.secondary' }}>
                                             No hay cálculos de nómina para este periodo. Presiona "Calcular Nómina".
                                         </TableCell>
                                     </TableRow>
@@ -286,10 +302,12 @@ export default function Nomina() {
                                         <TableRow key={nom.id} hover>
                                             <TableCell><Typography variant="subtitle2" fontWeight="bold">{nom.nombre} {nom.apellidoPaterno}</Typography></TableCell>
                                             <TableCell>{nom.rfc || 'N/A'}</TableCell>
-                                            <TableCell>{nom.diasTrabajados}</TableCell>
-                                            <TableCell sx={{ color: '#2e7d32', fontWeight: 'bold' }}>${nom.totalPercepciones?.toFixed(2)}</TableCell>
-                                            <TableCell sx={{ color: '#c62828', fontWeight: 'bold' }}>${nom.totalDeducciones?.toFixed(2)}</TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold' }}>${nom.sueldoNeto?.toFixed(2)}</TableCell>
+                                            <TableCell>{nom.diasPagados}</TableCell>
+                                            <TableCell>{nom.faltasTotales}</TableCell>
+                                            <TableCell>{nom.retardosTotales}</TableCell>
+                                            <TableCell sx={{ color: '#2e7d32', fontWeight: 'bold' }}>{dinero(nom.totalPercepciones)}</TableCell>
+                                            <TableCell sx={{ color: '#c62828', fontWeight: 'bold' }}>{dinero(nom.totalDeducciones)}</TableCell>
+                                            <TableCell sx={{ fontWeight: 'bold' }}>{dinero(nom.sueldoNeto)}</TableCell>
                                             <TableCell align="right">
                                                 <Tooltip title="Ver Recibo">
                                                     <IconButton size="small" color="info" onClick={() => abrirDetalleRecibo(nom)}><ReceiptLong fontSize="small" /></IconButton>
@@ -327,8 +345,9 @@ export default function Nomina() {
                                 value={formPeriodo.tipoPeriodoId} 
                                 onChange={(e) => setFormPeriodo({ ...formPeriodo, tipoPeriodoId: parseInt(e.target.value) })}
                             >
-                                <MenuItem value={1}>Quincenal</MenuItem>
-                                <MenuItem value={2}>Semanal</MenuItem>
+                                <MenuItem value={1}>Semanal</MenuItem>
+                                <MenuItem value={2}>Quincenal</MenuItem>
+                                <MenuItem value={3}>Mensual</MenuItem>
                             </TextField>
 
                             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
@@ -347,7 +366,14 @@ export default function Nomina() {
             </Dialog>
 
             <Dialog open={openModalDetalle} onClose={() => setOpenModalDetalle(false)} maxWidth="md" fullWidth>
-                <DialogTitle sx={{ fontWeight: 'bold', bgcolor: '#f1f5f9' }}>Desglose de Recibo</DialogTitle>
+                <DialogTitle sx={{ fontWeight: 'bold', bgcolor: '#f1f5f9' }}>
+                    Desglose de Recibo
+                    {empleadoSeleccionado && (
+                        <Typography variant="body2" color="text.secondary">
+                            {empleadoSeleccionado.nombre} {empleadoSeleccionado.apellidoPaterno} · {periodoActual?.nombre} · {empleadoSeleccionado.diasPagados} días pagados
+                        </Typography>
+                    )}
+                </DialogTitle>
                 <DialogContent dividers sx={{ p: 0 }}>
                     <TableContainer sx={{ width: '100%', overflowX: 'auto' }}>
                         <Table sx={{ minWidth: 500 }}>
@@ -356,6 +382,7 @@ export default function Nomina() {
                                     <TableCell sx={{ fontWeight: 'bold' }}>CÓDIGO</TableCell>
                                     <TableCell sx={{ fontWeight: 'bold' }}>CONCEPTO</TableCell>
                                     <TableCell sx={{ fontWeight: 'bold' }}>TIPO</TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>CÁLCULO</TableCell>
                                     <TableCell align="right" sx={{ fontWeight: 'bold' }}>TOTAL</TableCell>
                                 </TableRow>
                             </TableHead>
@@ -367,12 +394,31 @@ export default function Nomina() {
                                         <TableCell>
                                             <Chip label={det.tipoConcepto} size="small" color={det.tipoConcepto === 'PERCEPCION' ? 'success' : 'error'} sx={{ fontWeight: 'bold' }} />
                                         </TableCell>
-                                        <TableCell align="right" sx={{ fontWeight: 'bold' }}>${det.montoTotal?.toFixed(2)}</TableCell>
+                                        <TableCell sx={{ color: 'text.secondary', fontSize: 13 }}>{det.formulaAplicada}</TableCell>
+                                        <TableCell align="right" sx={{ fontWeight: 'bold', color: det.tipoConcepto === 'PERCEPCION' ? undefined : '#c62828' }}>
+                                            {det.tipoConcepto === 'PERCEPCION' ? '' : '- '}{dinero(det.montoTotal)}
+                                        </TableCell>
                                     </TableRow>
                                 ))}
+                                {detallesRecibo.length > 0 && empleadoSeleccionado && (
+                                    <>
+                                        <TableRow>
+                                            <TableCell colSpan={4} align="right">Total percepciones</TableCell>
+                                            <TableCell align="right" sx={{ fontWeight: 'bold', color: '#2e7d32' }}>{dinero(empleadoSeleccionado.totalPercepciones)}</TableCell>
+                                        </TableRow>
+                                        <TableRow>
+                                            <TableCell colSpan={4} align="right">Total deducciones</TableCell>
+                                            <TableCell align="right" sx={{ fontWeight: 'bold', color: '#c62828' }}>- {dinero(empleadoSeleccionado.totalDeducciones)}</TableCell>
+                                        </TableRow>
+                                        <TableRow sx={{ bgcolor: '#f8fafc' }}>
+                                            <TableCell colSpan={4} align="right" sx={{ fontWeight: 'bold' }}>Neto a pagar</TableCell>
+                                            <TableCell align="right" sx={{ fontWeight: 'bold', fontSize: 16 }}>{dinero(empleadoSeleccionado.sueldoNeto)}</TableCell>
+                                        </TableRow>
+                                    </>
+                                )}
                                 {detallesRecibo.length === 0 && (
                                     <TableRow>
-                                        <TableCell colSpan={4} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                                        <TableCell colSpan={5} align="center" sx={{ py: 4, color: 'text.secondary' }}>
                                             No hay conceptos registrados en este recibo.
                                         </TableCell>
                                     </TableRow>

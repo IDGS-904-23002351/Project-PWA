@@ -138,6 +138,8 @@ export default function EmpleadoDetalleModal({ open, onClose, empleadoId, token 
               <Campo label="Sede" value={detalle.sede_id?.nombre || detalle.sede_id?.id} />
               <Campo label="Departamento" value={detalle.departamento_id?.nombre || detalle.departamento_id?.id} />
               <Campo label="Turno" value={detalle.turno_id?.nombre || detalle.turno_id?.id} />
+              <Campo label="Salario diario" value={detalle.salario_diario != null ? `$${Number(detalle.salario_diario).toFixed(2)}` : ''} />
+              <Campo label="Tipo de contrato" value={detalle.tipo_contrato} />
               <Campo label="Estado" value={detalle.estado} />
             </Seccion>
 

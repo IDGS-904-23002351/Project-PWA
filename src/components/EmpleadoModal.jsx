@@ -33,7 +33,12 @@ const initialState = {
   dir_estado: '',
   dir_pais: 'México',
   dir_cp: '',
+  salario_diario: '',
+  tipo_contrato_id: 1,
 }
+
+// Salario mínimo general 2026 (zona general). El back valida con el valor de Configuración.
+const SALARIO_MINIMO = 315.04
 
 const selectProps = { displayEmpty: true }
 
@@ -49,6 +54,7 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
   const [turnos, setTurnos] = useState([])
   const [roles, setRoles] = useState([])
   const [direcciones, setDirecciones] = useState([])
+  const [tiposContrato, setTiposContrato] = useState([])
   
   const esEdicion = Boolean(empleado?.id || empleado?.Id)
 
@@ -56,13 +62,14 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
     if (!open || !token) return
     const cargarCatalogos = async () => {
       try {
-        const [rEmp, rSede, rDep, rTur, rRol, rDir] = await Promise.all([
+        const [rEmp, rSede, rDep, rTur, rRol, rDir, rTip] = await Promise.all([
           empleadoApi.obtenerEmpresas(token),
           empleadoApi.obtenerSedes(token),
           empleadoApi.obtenerDepartamentos(token),
           empleadoApi.obtenerTurnos(token),
           empleadoApi.obtenerRoles(token),
           empleadoApi.obtenerDirecciones(token),
+          empleadoApi.obtenerTiposContrato(token).catch(() => []),
         ])
         setEmpresas(rEmp || [])
         setSedes(rSede || [])
@@ -70,6 +77,7 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
         setTurnos(rTur || [])
         setRoles(rRol || [])
         setDirecciones(rDir || [])
+        setTiposContrato(rTip || [])
       } catch (err) {
         console.error('Error cargando catálogos', err)
       }
@@ -111,6 +119,8 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
         dir_estado: d.estado || d.Estado || '',
         dir_pais: d.pais || d.Pais || 'México',
         dir_cp: d.codigo_postal ? String(d.codigo_postal) : '',
+        salario_diario: empleado.salario_diario != null ? String(empleado.salario_diario) : '',
+        tipo_contrato_id: empleado.tipo_contrato_id ?? 1,
       })
     } else {
       setForm(initialState)
@@ -199,6 +209,8 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
       curp: form.curp?.trim()?.toUpperCase(),
       nss: form.nss?.trim(),
       fecha_ingreso: form.fecha_ingreso ? `${form.fecha_ingreso}T00:00:00` : null,
+      salario_diario: form.salario_diario !== '' ? Number(form.salario_diario) : null,
+      tipo_contrato_id: toInt(form.tipo_contrato_id),
     };
 
     let payloadFinal;
@@ -274,6 +286,20 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
       nuevosErrores.telefono = 'El teléfono debe tener 10 dígitos.'
     }
 
+    // Salario diario: obligatorio, número con hasta 2 decimales, no menor al mínimo
+    const salarioTexto = String(form.salario_diario ?? '').trim()
+    if (!salarioTexto) {
+      nuevosErrores.salario_diario = 'El salario diario es obligatorio.'
+    } else if (!/^\d{1,5}(\.\d{1,2})?$/.test(salarioTexto)) {
+      nuevosErrores.salario_diario = 'Escribe un importe válido, por ejemplo 450 o 450.50.'
+    } else if (Number(salarioTexto) < SALARIO_MINIMO) {
+      nuevosErrores.salario_diario = `No puede ser menor al salario mínimo ($${SALARIO_MINIMO.toFixed(2)}).`
+    } else if (Number(salarioTexto) > 50000) {
+      nuevosErrores.salario_diario = 'El salario diario no puede ser mayor a $50,000.'
+    }
+
+    if (!toInt(form.tipo_contrato_id)) nuevosErrores.tipo_contrato_id = 'El tipo de contrato es obligatorio.'
+
     if (form.modo_direccion === 'existente' && !toInt(form.direccion_id)) {
       nuevosErrores.direccion_id = 'Debes seleccionar una dirección existente.'
     }
@@ -303,7 +329,6 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
     setLoading(true)
     try {
       const payload = construirPayload()
-      console.log('PAYLOAD FINAL:', JSON.stringify(payload, null, 2))
       
       if (esEdicion) {
         await empleadoApi.actualizar(token, empleado.id || empleado.Id, payload)
@@ -445,6 +470,29 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
               {turnos.map((t) => {
                 const val = t.Id ?? t.id
                 return <MenuItem key={val} value={val}>{t.nombre || t.Nombre}</MenuItem>
+              })}
+            </TextField>
+          </Grid>
+
+          <Grid item xs={12} sm={4}>
+            <TextField
+              fullWidth
+              label="Salario diario *"
+              name="salario_diario"
+              value={form.salario_diario}
+              onChange={handleChange}
+              error={!!erroresCampo.salario_diario}
+              helperText={erroresCampo.salario_diario || `Mínimo $${SALARIO_MINIMO.toFixed(2)}. La nómina usa este salario.`}
+              inputProps={{ inputMode: 'decimal' }}
+              InputProps={{ startAdornment: <Typography color="textSecondary" sx={{ mr: 0.5 }}>$</Typography> }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <TextField select fullWidth label="Tipo de contrato *" name="tipo_contrato_id" value={form.tipo_contrato_id} onChange={handleChange} SelectProps={selectProps} sx={{ minWidth: 160 }} error={!!erroresCampo.tipo_contrato_id} helperText={erroresCampo.tipo_contrato_id}>
+              {(tiposContrato.length ? tiposContrato : [{ id: 1, nombre: 'INDEFINIDO' }, { id: 2, nombre: 'TEMPORAL' }]).map((t) => {
+                const val = t.Id ?? t.id
+                const nom = t.nombre || t.Nombre || ''
+                return <MenuItem key={val} value={val}>{nom.charAt(0) + nom.slice(1).toLowerCase()}</MenuItem>
               })}
             </TextField>
           </Grid>

@@ -27,6 +27,18 @@ const EDITABLES = {
     ayuda: 'Minutos que dura una sesión abierta (5 a 1440). Aplica a los próximos inicios de sesión.',
     unidad: 'min',
   },
+  SALARIO_MINIMO_DIARIO: {
+    titulo: 'Salario mínimo diario',
+    ayuda: 'Zona general 2026: $315.04. Ningún empleado puede ganar menos, y quien gana el mínimo no paga ISR ni IMSS.',
+    unidad: '$',
+    decimal: true,
+  },
+  UMA_DIARIA: {
+    titulo: 'UMA diaria',
+    ayuda: 'Valor 2026: $117.31. La nómina la usa para el tope y el excedente de las cuotas del IMSS.',
+    unidad: '$',
+    decimal: true,
+  },
 }
 
 function Seccion({ icono, titulo, descripcion, children }) {
@@ -76,7 +88,7 @@ function FilaParametro({ parametro, alGuardar }) {
         onChange={(e) => setValor(e.target.value)}
         error={Boolean(error)}
         helperText={error ?? `${info.ayuda} Última actualización: ${fechaHora(parametro.actualizadoEn)}`}
-        slotProps={{ htmlInput: { inputMode: 'numeric' }, input: { endAdornment: <Typography color="text.secondary">{info.unidad}</Typography> } }}
+        slotProps={{ htmlInput: { inputMode: info.decimal ? 'decimal' : 'numeric' }, input: { endAdornment: <Typography color="text.secondary">{info.unidad}</Typography> } }}
         sx={{ flex: 1, minWidth: 200 }}
       />
       <Button variant="contained" onClick={guardar} disabled={!cambio || guardando} sx={{ mt: 0.5 }}>

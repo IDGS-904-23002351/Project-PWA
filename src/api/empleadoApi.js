@@ -36,4 +36,5 @@ export const empleadoApi = {
   obtenerTurnos: async (token) => peticion('/api/Empleado/Turnos', { method: 'GET', token }),
   obtenerRoles: async (token) => peticion('/api/Empleado/Roles', { method: 'GET', token }),
   obtenerDirecciones: async (token) => peticion('/api/Empleado/Direcciones', { method: 'GET', token }),
+  obtenerTiposContrato: async (token) => peticion('/api/Empleado/TiposContrato', { method: 'GET', token }),
 }
