@@ -24,6 +24,9 @@ export default function Asistencias() {
   const [horaEntradaEdit, setHoraEntradaEdit] = useState('')
   const [estadoEdit, setEstadoEdit] = useState('')
   const [motivoCorreccion, setMotivoCorreccion] = useState('')
+  // Avisos en la página y en el panel (antes eran alert del navegador)
+  const [aviso, setAviso] = useState('')
+  const [errorPanel, setErrorPanel] = useState('')
   const [guardando, setGuardando] = useState(false)
 
   const cargarDatos = async () => {
@@ -49,25 +52,27 @@ export default function Asistencias() {
     setHoraEntradaEdit(item.horaEntrada || item.entrada || '07:00')
     setEstadoEdit(item.estado || 'Puntual')
     setMotivoCorreccion('')
+    setErrorPanel('')
   }
 
   const handleGuardarCorreccion = async () => {
     if (!motivoCorreccion.trim()) {
-      alert("Por favor, describe el motivo de la corrección.")
+      setErrorPanel('Por favor, describe el motivo de la corrección.')
       return
     }
     try {
       setGuardando(true)
+      setErrorPanel('')
       await corregirAsistencia(token, seleccionado.id, {
         horaEntrada: horaEntradaEdit,
         estado: estadoEdit,
         motivoCorreccion: motivoCorreccion
       })
-      alert(`Corrección guardada con éxito en el servidor.`)
+      setAviso('Corrección guardada correctamente.')
       setSeleccionado(null)
       cargarDatos() 
     } catch (e) {
-      alert("Error al guardar la corrección en el backend: " + e.message)
+      setErrorPanel(e.message || 'No se pudo guardar la corrección.')
     } finally {
       setGuardando(false)
     }
@@ -140,6 +145,7 @@ export default function Asistencias() {
 
       {cargando && <CircularProgress sx={{ display: 'block', mx: 'auto', my: 4 }} />}
       {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
+      {aviso && <Alert severity="success" sx={{ mb: 3 }} onClose={() => setAviso('')}>{aviso}</Alert>}
 
       {!cargando && !error && (
         <TableContainer component={Paper} sx={{ borderRadius: 3, boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
@@ -215,7 +221,8 @@ export default function Asistencias() {
               <MenuItem value="Incompleta">Incompleta</MenuItem>
               <MenuItem value="Justificada">Justificada</MenuItem>
             </TextField>
-            <TextField label="Motivo de corrección *" multiline rows={3} fullWidth size="small" value={motivoCorreccion} onChange={(e) => setMotivoCorreccion(e.target.value)} sx={{ mb: 3 }} />
+            <TextField label="Motivo de corrección *" multiline rows={3} fullWidth size="small" value={motivoCorreccion} onChange={(e) => { setMotivoCorreccion(e.target.value); setErrorPanel('') }} sx={{ mb: 2 }} inputProps={{ maxLength: 255 }} helperText={`${motivoCorreccion.length}/255`} />
+            {errorPanel && <Alert severity="error" sx={{ mb: 2 }}>{errorPanel}</Alert>}
           </Box>
 
           <Button variant="contained" fullWidth disabled={guardando} onClick={handleGuardarCorreccion} sx={{ bgcolor: '#0f766e', '&:hover': { bgcolor: '#115e59' }, textTransform: 'none', py: 1.2 }}>

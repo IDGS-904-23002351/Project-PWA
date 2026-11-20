@@ -2,3 +2,10 @@ html, body, #root {
   min-height: 100%;
   margin: 0;
 }
+
+/* Edge agrega su propio botón para ver la contraseña; la web ya tiene el suyo (el ojo),
+   así que se oculta el del navegador para que no salgan dos */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}

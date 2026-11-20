@@ -9,7 +9,7 @@ export default function useApi() {
       try {
         return await funcionApi(sesion.token, ...argumentos)
       } catch (error) {
-        if (error.status === 401) cerrarSesion('Tu sesión expiró. Inicia sesión de nuevo.')
+        if (error.status === 401) cerrarSesion('Tu sesión terminó: venció o fue cerrada (por ejemplo, si tu cuenta se desactivó). Inicia sesión de nuevo.')
         throw error
       }
     },

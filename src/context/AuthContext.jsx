@@ -32,7 +32,7 @@ function reducer(estado, accion) {
     case 'SESION_EXPIRADA':
       // Solo si había sesión (evita pisar el aviso de un cierre de sesión normal)
       return estado.sesion
-        ? { sesion: null, cargando: false, error: null, aviso: 'Tu sesión expiró. Inicia sesión de nuevo.' }
+        ? { sesion: null, cargando: false, error: null, aviso: 'Tu sesión terminó: venció o fue cerrada (por ejemplo, si tu cuenta se desactivó). Inicia sesión de nuevo.' }
         : estado
     default:
       return estado

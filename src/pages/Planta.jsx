@@ -9,6 +9,7 @@ import {
 import { LocationOn, Event, Save, Refresh, Add, Edit, Delete, QrCode2 } from '@mui/icons-material';
 import { plantaQrApi } from '../api/plantaQrApi';
 import EncabezadoPagina from '../components/EncabezadoPagina';
+import ConfirmarDialog from '../components/ConfirmarDialog';
 import { useAuth } from '../context/AuthContext';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -58,6 +59,7 @@ export default function Planta() {
     const [openModalFestivo, setOpenModalFestivo] = useState(false);
     const [nuevoFestivo, setNuevoFestivo] = useState({ id: 0, fecha: '', nombre: '', esOficial: true });
 
+    const [confirmar, setConfirmar] = useState(null);
     const timeoutRef = useRef(null);
     const anioActual = new Date().getFullYear();
 
@@ -222,9 +224,18 @@ export default function Planta() {
         }
     };
 
-    const handleEliminarFestivo = async (id) => {
+    const handleEliminarFestivo = async (id, confirmarHecho = false) => {
         if (!token) return;
-        if (!window.confirm('¿Estás seguro de eliminar este día festivo?')) return;
+        if (!confirmarHecho) {
+            const festivo = diasFestivos.find((f) => f.id === id);
+            setConfirmar({
+                titulo: 'Eliminar día festivo',
+                mensaje: `¿Seguro que deseas eliminar "${festivo?.nombre || 'este día festivo'}"?`,
+                textoBoton: 'Eliminar',
+                accion: () => handleEliminarFestivo(id, true),
+            });
+            return;
+        }
         try {
             await plantaQrApi.eliminarDiaFestivo(token, id);
             setMensaje({ tipo: 'success', texto: 'Día festivo eliminado.' });
@@ -417,7 +428,7 @@ export default function Planta() {
                                 
                                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, width: '100%' }}>
                                     <Box sx={{ flex: '1 1 250px' }}>
-                                        <TextField label="Nombre de la planta" size="small" fullWidth required 
+                                        <TextField label="Nombre de la planta" size="small" fullWidth required inputProps={{ maxLength: 120 }}
                                             value={ubicacion.nombre} onChange={(e) => setUbicacion({ ...ubicacion, nombre: e.target.value })} />
                                     </Box>
                                     <Box sx={{ flex: '1 1 120px' }}>
@@ -489,6 +500,7 @@ export default function Planta() {
                                 placeholder="Ej. Día de la Independencia" 
                                 value={nuevoFestivo.nombre} 
                                 onChange={(e) => setNuevoFestivo({ ...nuevoFestivo, nombre: e.target.value })} 
+                                inputProps={{ maxLength: 120 }}
                             />
                             <FormControlLabel 
                                 control={<Checkbox checked={nuevoFestivo.esOficial} onChange={(e) => setNuevoFestivo({ ...nuevoFestivo, esOficial: e.target.checked })} sx={{ color: '#00897b', '&.Mui-checked': { color: '#00897b' } }} />} 
@@ -507,6 +519,8 @@ export default function Planta() {
                     </DialogActions>
                 </Box>
             </Dialog>
+
+            <ConfirmarDialog datos={confirmar} onCerrar={() => setConfirmar(null)} />
         </Box>
     );
 }

@@ -5,7 +5,8 @@ import {
     TableRow, Paper, IconButton, Chip, Alert, Dialog, 
     DialogTitle, DialogContent, DialogActions, Tooltip, Stack, CircularProgress 
 } from '@mui/material';
-import { Search, Add, Edit, Delete } from '@mui/icons-material';
+import { Search, Add, Edit, Delete, Restore } from '@mui/icons-material';
+import ConfirmarDialog from '../components/ConfirmarDialog';
 import { useAuth } from '../context/AuthContext';
 import { departamentoApi } from '../api/departamentoApi';
 import EncabezadoPagina from '../components/EncabezadoPagina';
@@ -19,7 +20,13 @@ export default function Departamentos() {
 
     const [openModal, setOpenModal] = useState(false);
     const [editando, setEditando] = useState(false);
-    const [formDep, setFormDep] = useState({ id: 0, nombre: '', descripcion: '', estado: 'ACTIVO' });
+    // empresaId y rolId se conservan al editar: antes se mandaban vacíos y el SP los borraba
+    const vacio = { id: 0, nombre: '', descripcion: '', estado: 'ACTIVO', empresaId: null, rolId: null };
+    const [formDep, setFormDep] = useState(vacio);
+    const [errorModal, setErrorModal] = useState('');
+    const [errorNombre, setErrorNombre] = useState('');
+    const [guardando, setGuardando] = useState(false);
+    const [confirmar, setConfirmar] = useState(null);
 
     const cargarDepartamentos = useCallback(async () => {
         if (!sesion?.token) return;
@@ -40,13 +47,20 @@ export default function Departamentos() {
 
     const abrirNuevo = () => {
         setEditando(false);
-        setFormDep({ id: 0, nombre: '', descripcion: '', estado: 'ACTIVO' });
+        setFormDep(vacio);
+        setErrorModal('');
+        setErrorNombre('');
         setOpenModal(true);
     };
 
     const abrirEditar = (dep) => {
         setEditando(true);
-        setFormDep({ id: dep.id, nombre: dep.nombre || '', descripcion: dep.descripcion || '', estado: dep.estado || 'ACTIVO' });
+        setFormDep({
+            id: dep.id, nombre: dep.nombre || '', descripcion: dep.descripcion || '', estado: dep.estado || 'ACTIVO',
+            empresaId: dep.empresaId ?? null, rolId: dep.rolId ?? null,
+        });
+        setErrorModal('');
+        setErrorNombre('');
         setOpenModal(true);
     };
 
@@ -54,6 +68,16 @@ export default function Departamentos() {
         e.preventDefault();
         if (!sesion?.token) return;
         setMensaje({ tipo: '', texto: '' });
+        setErrorModal('');
+
+        // Misma validación que el SP, pero mostrada debajo del campo
+        if (!formDep.nombre.trim()) {
+            setErrorNombre('Escribe el nombre del departamento.');
+            return;
+        }
+        setErrorNombre('');
+
+        setGuardando(true);
         try {
             if (editando) {
                 await departamentoApi.actualizar(sesion.token, formDep.id, formDep);
@@ -65,12 +89,42 @@ export default function Departamentos() {
             setOpenModal(false);
             cargarDepartamentos();
         } catch (error) {
-            setMensaje({ tipo: 'error', texto: error.message || 'Error al procesar la solicitud.' });
+            // El error se muestra dentro de la ventana, que se queda abierta para corregir
+            setErrorModal(error.message || 'Error al procesar la solicitud.');
+        } finally {
+            setGuardando(false);
         }
     };
 
+    const pedirEliminar = (dep) => setConfirmar({
+        titulo: 'Desactivar departamento',
+        mensaje: `¿Seguro que deseas desactivar "${dep.nombre}"? Podrás reactivarlo después.`,
+        textoBoton: 'Desactivar',
+        accion: () => handleEliminar(dep.id),
+    });
+
+    const pedirReactivar = (dep) => setConfirmar({
+        titulo: 'Reactivar departamento',
+        mensaje: `¿Reactivar "${dep.nombre}"? Volverá a salir en el formulario de empleados.`,
+        textoBoton: 'Reactivar',
+        color: 'primary',
+        accion: async () => {
+            setMensaje({ tipo: '', texto: '' });
+            try {
+                await departamentoApi.actualizar(sesion.token, dep.id, {
+                    id: dep.id, nombre: dep.nombre, descripcion: dep.descripcion,
+                    empresaId: dep.empresaId ?? null, rolId: dep.rolId ?? null, estado: 'ACTIVO',
+                });
+                setMensaje({ tipo: 'success', texto: 'Departamento reactivado correctamente.' });
+                cargarDepartamentos();
+            } catch (error) {
+                setMensaje({ tipo: 'error', texto: error.message || 'No se pudo reactivar el departamento.' });
+            }
+        },
+    });
+
     const handleEliminar = async (id) => {
-        if (!window.confirm('¿Estás seguro de desactivar este departamento?') || !sesion?.token) return;
+        if (!sesion?.token) return;
         setMensaje({ tipo: '', texto: '' });
         try {
             const respuesta = await departamentoApi.eliminar(sesion.token, id);
@@ -185,16 +239,28 @@ export default function Departamentos() {
                                                 <Edit fontSize="small" />
                                             </IconButton>
                                         </Tooltip>
-                                        <Tooltip title="Eliminar">
-                                            <IconButton 
-                                                size="small" 
-                                                color="error" 
-                                                onClick={() => handleEliminar(dep.id)}
-                                                sx={{ '&:hover': { bgcolor: '#fee2e2' } }}
-                                            >
-                                                <Delete fontSize="small" />
-                                            </IconButton>
-                                        </Tooltip>
+                                        {(dep.estado || 'ACTIVO') === 'ACTIVO' ? (
+                                            <Tooltip title="Desactivar">
+                                                <IconButton 
+                                                    size="small" 
+                                                    color="error" 
+                                                    onClick={() => pedirEliminar(dep)}
+                                                    sx={{ '&:hover': { bgcolor: '#fee2e2' } }}
+                                                >
+                                                    <Delete fontSize="small" />
+                                                </IconButton>
+                                            </Tooltip>
+                                        ) : (
+                                            <Tooltip title="Reactivar">
+                                                <IconButton 
+                                                    size="small" 
+                                                    onClick={() => pedirReactivar(dep)}
+                                                    sx={{ color: '#0f766e', '&:hover': { bgcolor: '#ccfbf1' } }}
+                                                >
+                                                    <Restore fontSize="small" />
+                                                </IconButton>
+                                            </Tooltip>
+                                        )}
                                     </Stack>
                                 </TableCell>
                             </TableRow>
@@ -216,15 +282,18 @@ export default function Departamentos() {
                 <DialogTitle sx={{ fontWeight: 'bold' }}>
                     {editando ? 'Editar Departamento' : 'Registrar Nuevo Departamento'}
                 </DialogTitle>
-                <Box component="form" onSubmit={handleSubmit}>
+                <Box component="form" onSubmit={handleSubmit} noValidate>
                     <DialogContent dividers>
                         <Stack spacing={2.5}>
+                            {errorModal && <Alert severity="error">{errorModal}</Alert>}
                             <TextField 
-                                label="Nombre del Departamento" 
+                                label="Nombre del Departamento *" 
                                 size="small" 
-                                required 
                                 value={formDep.nombre} 
-                                onChange={(e) => setFormDep({ ...formDep, nombre: e.target.value })} 
+                                onChange={(e) => { setFormDep({ ...formDep, nombre: e.target.value }); setErrorNombre(''); }} 
+                                error={!!errorNombre}
+                                helperText={errorNombre || `${formDep.nombre.length}/120`}
+                                inputProps={{ maxLength: 120 }}
                             />
                             <TextField 
                                 label="Descripción" 
@@ -233,6 +302,8 @@ export default function Departamentos() {
                                 rows={3} 
                                 value={formDep.descripcion} 
                                 onChange={(e) => setFormDep({ ...formDep, descripcion: e.target.value })} 
+                                helperText={`${formDep.descripcion.length}/255`}
+                                inputProps={{ maxLength: 255 }}
                             />
                         </Stack>
                     </DialogContent>
@@ -243,6 +314,7 @@ export default function Departamentos() {
                         <Button 
                             type="submit" 
                             variant="contained" 
+                            disabled={guardando}
                             sx={{
                                 bgcolor: '#0f766e',
                                 '&:hover': { bgcolor: '#115e59' },
@@ -256,6 +328,8 @@ export default function Departamentos() {
                     </DialogActions>
                 </Box>
             </Dialog>
+
+            <ConfirmarDialog datos={confirmar} onCerrar={() => setConfirmar(null)} />
         </Box>
     );
 }

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
-import { Box, CircularProgress, TextField, InputAdornment, useMediaQuery, useTheme } from '@mui/material'
+import { Box, CircularProgress, TextField, InputAdornment, useMediaQuery, useTheme, Typography } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
 
 delete L.Icon.Default.prototype._getIconUrl
@@ -30,6 +30,7 @@ export default function MapaDireccion({ onDireccionSeleccionada }) {
   const [center, setCenter] = useState([19.4326, -99.1332])
   const [loading, setLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [aviso, setAviso] = useState('')
 
   const obtenerDireccion = async (lat, lng) => {
     setLoading(true)
@@ -43,7 +44,8 @@ export default function MapaDireccion({ onDireccionSeleccionada }) {
         const addr = data.address
         onDireccionSeleccionada?.({
           calle: `${addr.road || ''} ${addr.house_number || ''}`.trim(),
-          colonia: addr.suburb || addr.neighbourhood || '',
+          // En México OpenStreetMap guarda la colonia con distintos nombres; si no la tiene, se escribe a mano
+          colonia: addr.neighbourhood || addr.suburb || addr.quarter || addr.residential || addr.city_district || addr.hamlet || '',
           ciudad: addr.city || addr.town || addr.village || '',
           estado: addr.state || '',
           pais: addr.country || 'México',
@@ -66,6 +68,7 @@ export default function MapaDireccion({ onDireccionSeleccionada }) {
   const handleSearch = async (e) => {
     e.preventDefault()
     if (!searchQuery.trim()) return
+    setAviso('')
     setLoading(true)
     try {
       const res = await fetch(
@@ -80,7 +83,7 @@ export default function MapaDireccion({ onDireccionSeleccionada }) {
         setPosition([lat, lng])
         obtenerDireccion(lat, lng)
       } else {
-        alert('No se encontró la dirección. Intenta ser más específico.')
+        setAviso('No se encontró la dirección. Intenta ser más específico.')
         setLoading(false)
       }
     } catch (error) {
@@ -107,6 +110,9 @@ export default function MapaDireccion({ onDireccionSeleccionada }) {
           }}
         />
       </Box>
+      {aviso && (
+        <Typography variant="caption" color="error" sx={{ display: 'block', mt: -1, mb: 1 }}>{aviso}</Typography>
+      )}
 
       <Box
         sx={{

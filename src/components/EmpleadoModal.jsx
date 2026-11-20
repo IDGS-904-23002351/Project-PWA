@@ -37,6 +37,13 @@ const initialState = {
   tipo_contrato_id: 1,
 }
 
+// Fecha de hoy + 30 días en formato AAAA-MM-DD (hora local)
+const fechaMaximaIngreso = () => {
+  const d = new Date()
+  d.setDate(d.getDate() + 30)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 // Salario mínimo general 2026 (zona general). El back valida con el valor de Configuración.
 const SALARIO_MINIMO = 315.04
 
@@ -288,8 +295,18 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
       nuevosErrores.correo = 'El formato del correo no es válido.'
     }
 
-    if (form.telefono && form.telefono.replace(/\D/g, '').length !== 10) {
-      nuevosErrores.telefono = 'El teléfono debe tener 10 dígitos.'
+    // Solo números: antes se quitaban las letras antes de contar y "abc5512345678" pasaba
+    if (form.telefono?.trim() && !/^\d{10}$/.test(form.telefono.trim())) {
+      nuevosErrores.telefono = 'El teléfono debe tener 10 dígitos (solo números).'
+    }
+
+    if (form.modo_direccion !== 'existente' && form.dir_cp?.trim() && !/^\d{5}$/.test(form.dir_cp.trim())) {
+      nuevosErrores.dir_cp = 'El código postal debe tener 5 dígitos.'
+    }
+
+    // Fecha de ingreso: como máximo 30 días en el futuro (el SP valida lo mismo)
+    if (form.fecha_ingreso && form.fecha_ingreso > fechaMaximaIngreso()) {
+      nuevosErrores.fecha_ingreso = 'La fecha de ingreso no puede ser de más de 30 días en el futuro.'
     }
 
     // Salario diario: obligatorio, número con hasta 2 decimales, no menor al mínimo
@@ -365,19 +382,19 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
         <Typography variant="overline" color="textSecondary">Datos personales</Typography>
         <Grid container spacing={2} sx={{ mt: 0.5, mb: 2 }}>
           <Grid item xs={12} sm={4}>
-            <TextField fullWidth label="Nombre *" name="nombre" value={form.nombre} onChange={handleChange} error={!!erroresCampo.nombre} helperText={erroresCampo.nombre} />
+            <TextField fullWidth label="Nombre *" name="nombre" inputProps={{ maxLength: 80 }} value={form.nombre} onChange={handleChange} error={!!erroresCampo.nombre} helperText={erroresCampo.nombre} />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <TextField fullWidth label="Apellido paterno *" name="apellido_Paterno" value={form.apellido_Paterno} onChange={handleChange} error={!!erroresCampo.apellido_Paterno} helperText={erroresCampo.apellido_Paterno} />
+            <TextField fullWidth label="Apellido paterno *" name="apellido_Paterno" inputProps={{ maxLength: 80 }} value={form.apellido_Paterno} onChange={handleChange} error={!!erroresCampo.apellido_Paterno} helperText={erroresCampo.apellido_Paterno} />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <TextField fullWidth label="Apellido materno" name="apellido_Materno" value={form.apellido_Materno} onChange={handleChange} />
+            <TextField fullWidth label="Apellido materno" name="apellido_Materno" inputProps={{ maxLength: 80 }} value={form.apellido_Materno} onChange={handleChange} />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <TextField fullWidth label="Correo *" name="correo" type="email" value={form.correo} onChange={handleChange} error={!!erroresCampo.correo} helperText={erroresCampo.correo} />
+            <TextField fullWidth label="Correo *" name="correo" inputProps={{ maxLength: 150 }} type="email" value={form.correo} onChange={handleChange} error={!!erroresCampo.correo} helperText={erroresCampo.correo} />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <TextField fullWidth label="Teléfono" name="telefono" value={form.telefono} onChange={handleChange} error={!!erroresCampo.telefono} helperText={erroresCampo.telefono} />
+            <TextField fullWidth label="Teléfono" name="telefono" inputProps={{ maxLength: 10, inputMode: 'numeric' }} value={form.telefono} onChange={handleChange} error={!!erroresCampo.telefono} helperText={erroresCampo.telefono} />
           </Grid>
 
           <Grid item xs={12}>
@@ -410,22 +427,22 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
 
             <Grid container spacing={2} sx={{ mb: 3 }}>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="Calle" name="dir_calle" value={form.dir_calle} onChange={handleChange} error={!!erroresCampo.dir_calle} helperText={erroresCampo.dir_calle} />
+                <TextField fullWidth label="Calle" name="dir_calle" inputProps={{ maxLength: 150 }} value={form.dir_calle} onChange={handleChange} error={!!erroresCampo.dir_calle} helperText={erroresCampo.dir_calle} />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="Colonia" name="dir_colonia" value={form.dir_colonia} onChange={handleChange} />
+                <TextField fullWidth label="Colonia" name="dir_colonia" inputProps={{ maxLength: 100 }} value={form.dir_colonia} onChange={handleChange} />
               </Grid>
               <Grid item xs={12} sm={4}>
-                <TextField fullWidth label="Ciudad" name="dir_ciudad" value={form.dir_ciudad} onChange={handleChange} />
+                <TextField fullWidth label="Ciudad" name="dir_ciudad" inputProps={{ maxLength: 100 }} value={form.dir_ciudad} onChange={handleChange} />
               </Grid>
               <Grid item xs={12} sm={4}>
-                <TextField fullWidth label="Estado" name="dir_estado" value={form.dir_estado} onChange={handleChange} />
+                <TextField fullWidth label="Estado" name="dir_estado" inputProps={{ maxLength: 100 }} value={form.dir_estado} onChange={handleChange} />
               </Grid>
               <Grid item xs={12} sm={4}>
-                <TextField fullWidth label="Código postal" name="dir_cp" value={form.dir_cp} onChange={handleChange} />
+                <TextField fullWidth label="Código postal" name="dir_cp" inputProps={{ maxLength: 5, inputMode: 'numeric' }} value={form.dir_cp} onChange={handleChange} error={!!erroresCampo.dir_cp} helperText={erroresCampo.dir_cp} />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="País" name="dir_pais" value={form.dir_pais} onChange={handleChange} />
+                <TextField fullWidth label="País" name="dir_pais" inputProps={{ maxLength: 80 }} value={form.dir_pais} onChange={handleChange} />
               </Grid>
             </Grid>
           </>
@@ -435,16 +452,16 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
         <Typography variant="overline" color="textSecondary">Datos laborales</Typography>
         <Grid container spacing={2} sx={{ mt: 0.5, mb: 2 }}>
           <Grid item xs={12} sm={4}>
-            <TextField fullWidth label="RFC *" name="rfc" value={form.rfc} onChange={handleChange} error={!!erroresCampo.rfc} helperText={erroresCampo.rfc} />
+            <TextField fullWidth label="RFC *" name="rfc" inputProps={{ maxLength: 13 }} value={form.rfc} onChange={handleChange} error={!!erroresCampo.rfc} helperText={erroresCampo.rfc} />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <TextField fullWidth label="CURP *" name="curp" value={form.curp} onChange={handleChange} error={!!erroresCampo.curp} helperText={erroresCampo.curp} />
+            <TextField fullWidth label="CURP *" name="curp" inputProps={{ maxLength: 18 }} value={form.curp} onChange={handleChange} error={!!erroresCampo.curp} helperText={erroresCampo.curp} />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <TextField fullWidth label="NSS *" name="nss" value={form.nss} onChange={handleChange} error={!!erroresCampo.nss} helperText={erroresCampo.nss} />
+            <TextField fullWidth label="NSS *" name="nss" inputProps={{ maxLength: 11, inputMode: 'numeric' }} value={form.nss} onChange={handleChange} error={!!erroresCampo.nss} helperText={erroresCampo.nss} />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <TextField fullWidth label="Fecha de ingreso" name="fecha_ingreso" type="date" value={form.fecha_ingreso} onChange={handleChange} InputLabelProps={{ shrink: true }} />
+            <TextField fullWidth label="Fecha de ingreso" name="fecha_ingreso" type="date" value={form.fecha_ingreso} onChange={handleChange} InputLabelProps={{ shrink: true }} inputProps={{ max: fechaMaximaIngreso() }} error={!!erroresCampo.fecha_ingreso} helperText={erroresCampo.fecha_ingreso} />
           </Grid>
 
           <Grid item xs={12} sm={4}>
@@ -527,10 +544,10 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
                 </TextField>
               </Grid>
               <Grid item xs={12} sm={4}>
-                <TextField fullWidth label="Nombre de usuario *" name="nombre_usuario" value={form.nombre_usuario} onChange={handleChange} error={!!erroresCampo.nombre_usuario} helperText={erroresCampo.nombre_usuario} />
+                <TextField fullWidth label="Nombre de usuario *" name="nombre_usuario" inputProps={{ maxLength: 50 }} value={form.nombre_usuario} onChange={handleChange} error={!!erroresCampo.nombre_usuario} helperText={erroresCampo.nombre_usuario} />
               </Grid>
               <Grid item xs={12} sm={4}>
-                <TextField fullWidth label="Contraseña *" name="contrasena" type="password" value={form.contrasena} onChange={handleChange} error={!!erroresCampo.contrasena} helperText={erroresCampo.contrasena} />
+                <TextField fullWidth label="Contraseña *" name="contrasena" inputProps={{ maxLength: 50 }} type="password" value={form.contrasena} onChange={handleChange} error={!!erroresCampo.contrasena} helperText={erroresCampo.contrasena} />
               </Grid>
             </Grid>
           </>

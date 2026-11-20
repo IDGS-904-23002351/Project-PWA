@@ -15,6 +15,7 @@ import { useAuth } from '../context/AuthContext'
 import CrearTurnoModal from '../components/CrearTurnoModal'
 import CambiarTurnoModal from '../components/CambiarTurnoModal'
 import EncabezadoPagina from '../components/EncabezadoPagina'
+import ConfirmarDialog from '../components/ConfirmarDialog'
 
 const COLORS = {
   primary: '#0f766e',
@@ -107,14 +108,26 @@ export default function TurnosPage() {
     }
   }
 
-  const handleEliminarTurno = async (turnoId) => {
-    if (!window.confirm('¿Estás seguro de eliminar este turno?')) return
-    try {
-      await turnoApi.eliminarTurno(token, turnoId)
-      cargarDatos() 
-    } catch (err) {
-      alert(err.message || 'Error al eliminar el turno')
-    }
+  const [confirmar, setConfirmar] = useState(null)
+  const [aviso, setAviso] = useState({ tipo: '', texto: '' })
+
+  // Antes: window.confirm y alert (ventanas grises del navegador)
+  const handleEliminarTurno = (turnoId) => {
+    setConfirmar({
+      titulo: 'Eliminar turno',
+      mensaje: '¿Seguro que deseas eliminar este turno? Los empleados que lo tengan deben cambiarse antes.',
+      textoBoton: 'Eliminar',
+      accion: async () => {
+        setAviso({ tipo: '', texto: '' })
+        try {
+          const r = await turnoApi.eliminarTurno(token, turnoId)
+          setAviso({ tipo: 'success', texto: r?.mensaje || 'Turno desactivado correctamente.' })
+          cargarDatos()
+        } catch (err) {
+          setAviso({ tipo: 'error', texto: err.message || 'Error al eliminar el turno' })
+        }
+      },
+    })
   }
 
   const abrirModalCambiar = (asig) => {
@@ -138,6 +151,7 @@ export default function TurnosPage() {
       />
 
       {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
+      {aviso.texto && <Alert severity={aviso.tipo} sx={{ mb: 3 }} onClose={() => setAviso({ tipo: '', texto: '' })}>{aviso.texto}</Alert>}
 
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mb: 4, width: '100%' }}>
         {loading ? (
@@ -284,6 +298,8 @@ export default function TurnosPage() {
         turnos={resumen}
         token={token} 
       />
+
+      <ConfirmarDialog datos={confirmar} onCerrar={() => setConfirmar(null)} />
     </Box>
   )
 }

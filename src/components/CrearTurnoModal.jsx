@@ -99,7 +99,7 @@ export default function CrearTurnoModal({ open, onClose, onSaved, token }) {
         <Grid container spacing={2} sx={{ mt: 0.5 }}>
           <Grid item xs={12}>
             <TextField
-              fullWidth label="Nombre del turno *" name="nombre"
+              fullWidth label="Nombre del turno *" name="nombre" inputProps={{ maxLength: 80 }}
               value={form.nombre} onChange={handleChange}
               placeholder="Ej. Matutino"
               error={!!errores.nombre} helperText={errores.nombre}

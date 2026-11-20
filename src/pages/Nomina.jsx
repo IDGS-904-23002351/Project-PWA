@@ -9,6 +9,7 @@ import {
 import { Search, Add, Lock, ReceiptLong, Calculate } from '@mui/icons-material';
 import { nominaApi } from '../api/nominaApi';
 import { useAuth } from '../context/AuthContext';
+import ConfirmarDialog from '../components/ConfirmarDialog';
 import EncabezadoPagina from '../components/EncabezadoPagina';
 
 export default function Nomina() {
@@ -77,8 +78,19 @@ export default function Nomina() {
         }
     };
 
-    const handleCerrarPeriodo = async (id) => {
-        if (!window.confirm('¿Cerrar y pagar este periodo?')) return;
+    const [confirmar, setConfirmar] = useState(null);
+
+    const handleCerrarPeriodo = (id) => {
+        const periodo = periodos.find((p) => p.id === id);
+        setConfirmar({
+            titulo: 'Cerrar periodo',
+            mensaje: `¿Cerrar "${periodo?.nombre || 'este periodo'}"? Ya no se podrá recalcular y los empleados verán su recibo en la app.`,
+            textoBoton: 'Cerrar periodo',
+            accion: () => cerrarPeriodo(id),
+        });
+    };
+
+    const cerrarPeriodo = async (id) => {
         try {
             await nominaApi.cerrarPeriodo(token, id);
             setMensaje({ tipo: 'success', texto: 'Periodo cerrado correctamente. Los empleados ya pueden ver su recibo en la app.' });
@@ -334,6 +346,7 @@ export default function Nomina() {
                                 required 
                                 value={formPeriodo.nombre} 
                                 onChange={(e) => setFormPeriodo({ ...formPeriodo, nombre: e.target.value })} 
+                                inputProps={{ maxLength: 80 }}
                             />
                             
                             <TextField 
@@ -429,6 +442,8 @@ export default function Nomina() {
                 </DialogContent>
                 <DialogActions sx={{ p: 2 }}><Button onClick={() => setOpenModalDetalle(false)} variant="contained" sx={{ bgcolor: '#0f766e' }}>Cerrar</Button></DialogActions>
             </Dialog>
+
+            <ConfirmarDialog datos={confirmar} onCerrar={() => setConfirmar(null)} />
         </Box>
     );
 }
