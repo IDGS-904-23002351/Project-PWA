@@ -87,8 +87,15 @@ export default function Planta() {
                     setQrVigente(qr);
                 }
             }
-            const festivos = await plantaQrApi.listarDiasFestivos(token, anioActual).catch(() => []);
-            setDiasFestivos(Array.isArray(festivos) ? festivos : []);
+            // Este año y el siguiente, para poder registrar los de enero desde diciembre
+            const [esteAnio, siguiente] = await Promise.all([
+                plantaQrApi.listarDiasFestivos(token, anioActual).catch(() => []),
+                plantaQrApi.listarDiasFestivos(token, anioActual + 1).catch(() => []),
+            ]);
+            setDiasFestivos([
+                ...(Array.isArray(esteAnio) ? esteAnio : []),
+                ...(Array.isArray(siguiente) ? siguiente : []),
+            ]);
         } catch {
             setMensaje({ tipo: 'error', texto: 'No se pudo cargar la información de la planta.' });
         } finally {
@@ -131,13 +138,25 @@ export default function Planta() {
         if (e) e.preventDefault();
         if (!token) return;
         setMensaje({ tipo: '', texto: '' });
+
+        // Antes un radio de 0 se cambiaba por 100 y una latitud vacía por 0 sin avisar
+        const latitud = Number(ubicacion.latitud);
+        const longitud = Number(ubicacion.longitud);
+        const radio = Number(ubicacion.radioToleranciaMetros);
+        if (String(ubicacion.latitud).trim() === '' || isNaN(latitud) || latitud < -90 || latitud > 90)
+            return setMensaje({ tipo: 'error', texto: 'La latitud debe estar entre -90 y 90.' });
+        if (String(ubicacion.longitud).trim() === '' || isNaN(longitud) || longitud < -180 || longitud > 180)
+            return setMensaje({ tipo: 'error', texto: 'La longitud debe estar entre -180 y 180.' });
+        if (!Number.isInteger(radio) || radio < 10 || radio > 2000)
+            return setMensaje({ tipo: 'error', texto: 'El radio debe estar entre 10 y 2000 metros.' });
+
         setSavingUbicacion(true);
         try {
             await plantaQrApi.guardarUbicacion(token, {
                 ...ubicacion,
-                latitud: parseFloat(ubicacion.latitud) || 0,
-                longitud: parseFloat(ubicacion.longitud) || 0,
-                radioToleranciaMetros: parseInt(ubicacion.radioToleranciaMetros, 10) || 100
+                latitud,
+                longitud,
+                radioToleranciaMetros: radio
             });
             setMensaje({ tipo: 'success', texto: 'Ubicación de planta guardada correctamente.' });
             await cargarDatos();
@@ -154,9 +173,10 @@ export default function Planta() {
         }
         setLoadingQr(true);
         try {
+            // El código nuevo lo genera el servidor al azar (sp_RegenerarDispositivoQR)
             await plantaQrApi.regenerarQR(token, { 
                 ubicacionId: ubicacion.id, 
-                codigoQr: `QR-PLANTA-${ubicacion.id}-${Date.now()}` 
+                codigoQr: 'GENERADO-EN-SERVIDOR' 
             });
             setQrVigente(await plantaQrApi.obtenerQrVigente(token, ubicacion.id));
             setMensaje({ tipo: 'success', texto: 'Código QR regenerado exitosamente.' });
@@ -295,7 +315,7 @@ export default function Planta() {
                             >
                                 <Stack direction="row" spacing={1} alignItems="center">
                                     <Event sx={{ color: '#00897b', fontSize: 28 }} />
-                                    <Typography variant="h6" fontWeight="bold" sx={{ m: 0, p: 0 }}>Días Festivos ({anioActual})</Typography>
+                                    <Typography variant="h6" fontWeight="bold" sx={{ m: 0, p: 0 }}>Días Festivos ({anioActual}–{anioActual + 1})</Typography>
                                 </Stack>
                                 <Button variant="contained" size="small" startIcon={<Add />} 
                                     onClick={() => { setNuevoFestivo({ id: 0, fecha: '', nombre: '', esOficial: true }); setOpenModalFestivo(true); }} 

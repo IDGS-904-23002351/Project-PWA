@@ -7,6 +7,14 @@ import { turnoApi } from '../api/turnoApi'
 
 const initialState = { nombre: '', hora_inicio: '', hora_fin: '', minutos_tolerancia: 10 }
 
+// Minutos que dura el turno; si termina antes de la hora en que empieza, sigue al día siguiente
+const minutosTurno = (inicio, fin) => {
+  const [hi, mi] = inicio.split(':').map(Number)
+  const [hf, mf] = fin.split(':').map(Number)
+  const diferencia = (hf * 60 + mf) - (hi * 60 + mi)
+  return diferencia < 0 ? diferencia + 1440 : diferencia
+}
+
 export default function CrearTurnoModal({ open, onClose, onSaved, token }) {
   const [form, setForm] = useState(initialState)
   const [loading, setLoading] = useState(false)
@@ -39,8 +47,17 @@ export default function CrearTurnoModal({ open, onClose, onSaved, token }) {
     if (!form.hora_inicio) nuevosErrores.hora_inicio = 'La hora de inicio es obligatoria.'
     if (!form.hora_fin) nuevosErrores.hora_fin = 'La hora de fin es obligatoria.'
     
-    if (form.hora_inicio && form.hora_fin && form.hora_inicio >= form.hora_fin) {
-      nuevosErrores.hora_fin = 'La hora de fin debe ser mayor a la de inicio.'
+    // Si la hora de fin es menor que la de inicio, es un turno nocturno
+    // (termina al día siguiente); el back lo marca como cruza_medianoche
+    if (form.hora_inicio && form.hora_fin) {
+      const minutos = minutosTurno(form.hora_inicio, form.hora_fin)
+      if (minutos === 0) nuevosErrores.hora_fin = 'La hora de fin no puede ser igual a la de inicio.'
+      else if (minutos < 60 || minutos > 960) nuevosErrores.hora_fin = 'El turno debe durar entre 1 y 16 horas.'
+    }
+
+    const tolerancia = String(form.minutos_tolerancia ?? '').trim()
+    if (!/^\d{1,3}$/.test(tolerancia) || Number(tolerancia) > 120) {
+      nuevosErrores.minutos_tolerancia = 'La tolerancia debe ser un número entre 0 y 120 minutos.'
     }
 
     if (Object.keys(nuevosErrores).length > 0) {
@@ -60,7 +77,7 @@ export default function CrearTurnoModal({ open, onClose, onSaved, token }) {
         nombre: form.nombre.trim(),
         hora_inicio: formatearHora(form.hora_inicio),
         hora_fin: formatearHora(form.hora_fin),
-        minutos_tolerancia: Number(form.minutos_tolerancia) || 10
+        minutos_tolerancia: Number(form.minutos_tolerancia) // 0 es válido (sin tolerancia)
       }
 
       await turnoApi.crearTurno(token, payload)
@@ -101,14 +118,17 @@ export default function CrearTurnoModal({ open, onClose, onSaved, token }) {
               fullWidth label="Hora de fin *" name="hora_fin" type="time"
               value={form.hora_fin} onChange={handleChange}
               InputLabelProps={{ shrink: true }}
-              error={!!errores.hora_fin} helperText={errores.hora_fin}
+              error={!!errores.hora_fin}
+              helperText={errores.hora_fin || (form.hora_inicio && form.hora_fin && form.hora_fin < form.hora_inicio ? 'Turno nocturno: termina al día siguiente.' : '')}
             />
           </Grid>
           <Grid item xs={12}>
             <TextField
               fullWidth label="Minutos de tolerancia" name="minutos_tolerancia" type="number"
               value={form.minutos_tolerancia} onChange={handleChange}
-              inputProps={{ min: 0 }}
+              inputProps={{ min: 0, max: 120 }}
+              error={!!errores.minutos_tolerancia}
+              helperText={errores.minutos_tolerancia || 'De 0 a 120 minutos.'}
             />
           </Grid>
         </Grid>

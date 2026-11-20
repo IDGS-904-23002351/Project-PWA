@@ -74,7 +74,6 @@ export default function Empleados() {
     try {
       const data = await empleadoApi.obtener(sesion.token, id)
       const completo = data?.empleado ?? data ?? emp
-      console.log('EMPLEADO CARGADO >>>', completo)
       setEmpleadoSeleccionado(completo)
       setModalOpen(true)
     } catch (error) {

@@ -273,12 +273,18 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
       nuevosErrores.curp = 'La CURP no tiene un formato válido.'
     }
 
-    // NSS opcional; si se escribe son 11 dígitos
-    if (form.nss?.trim() && !/^\d{11}$/.test(form.nss.trim())) {
+    // NSS y correo obligatorios: en la base de datos no se pueden repetir y
+    // SQL Server solo deja un registro vacío, así que el segundo empleado sin
+    // NSS o sin correo no se podía guardar
+    if (!form.nss?.trim()) {
+      nuevosErrores.nss = 'El NSS es obligatorio.'
+    } else if (!/^\d{11}$/.test(form.nss.trim())) {
       nuevosErrores.nss = 'El NSS debe tener 11 dígitos.'
     }
 
-    if (form.correo && !/\S+@\S+\.\S+/.test(form.correo)) {
+    if (!form.correo?.trim()) {
+      nuevosErrores.correo = 'El correo es obligatorio.'
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.correo.trim())) {
       nuevosErrores.correo = 'El formato del correo no es válido.'
     }
 
@@ -368,7 +374,7 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
             <TextField fullWidth label="Apellido materno" name="apellido_Materno" value={form.apellido_Materno} onChange={handleChange} />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <TextField fullWidth label="Correo" name="correo" type="email" value={form.correo} onChange={handleChange} error={!!erroresCampo.correo} helperText={erroresCampo.correo} />
+            <TextField fullWidth label="Correo *" name="correo" type="email" value={form.correo} onChange={handleChange} error={!!erroresCampo.correo} helperText={erroresCampo.correo} />
           </Grid>
           <Grid item xs={12} sm={6}>
             <TextField fullWidth label="Teléfono" name="telefono" value={form.telefono} onChange={handleChange} error={!!erroresCampo.telefono} helperText={erroresCampo.telefono} />
@@ -435,7 +441,7 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
             <TextField fullWidth label="CURP *" name="curp" value={form.curp} onChange={handleChange} error={!!erroresCampo.curp} helperText={erroresCampo.curp} />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <TextField fullWidth label="NSS" name="nss" value={form.nss} onChange={handleChange} error={!!erroresCampo.nss} helperText={erroresCampo.nss} />
+            <TextField fullWidth label="NSS *" name="nss" value={form.nss} onChange={handleChange} error={!!erroresCampo.nss} helperText={erroresCampo.nss} />
           </Grid>
           <Grid item xs={12} sm={4}>
             <TextField fullWidth label="Fecha de ingreso" name="fecha_ingreso" type="date" value={form.fecha_ingreso} onChange={handleChange} InputLabelProps={{ shrink: true }} />
