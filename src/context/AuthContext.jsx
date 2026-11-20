@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer } from 'react'
 import * as authApi from '../api/authApi'
+import { EVENTO_SESION_EXPIRADA } from '../api/http'
 import useInactividad from '../hooks/useInactividad'
 
 const CLAVE = 'nomi_sesion'
@@ -28,6 +29,11 @@ function reducer(estado, accion) {
       return { ...estado, cargando: false, error: accion.mensaje }
     case 'LOGOUT':
       return { sesion: null, cargando: false, error: null, aviso: accion.aviso ?? null }
+    case 'SESION_EXPIRADA':
+      // Solo si había sesión (evita pisar el aviso de un cierre de sesión normal)
+      return estado.sesion
+        ? { sesion: null, cargando: false, error: null, aviso: 'Tu sesión expiró. Inicia sesión de nuevo.' }
+        : estado
     default:
       return estado
   }
@@ -59,6 +65,13 @@ export function AuthProvider({ children }) {
     },
     [estado.sesion],
   )
+
+  // Si cualquier petición recibe 401, la sesión ya no sirve: se regresa al login
+  useEffect(() => {
+    const alExpirar = () => dispatch({ type: 'SESION_EXPIRADA' })
+    window.addEventListener(EVENTO_SESION_EXPIRADA, alExpirar)
+    return () => window.removeEventListener(EVENTO_SESION_EXPIRADA, alExpirar)
+  }, [])
 
   useInactividad(
     MINUTOS_INACTIVIDAD * 60 * 1000,
