@@ -15,21 +15,30 @@ const minutosTurno = (inicio, fin) => {
   return diferencia < 0 ? diferencia + 1440 : diferencia
 }
 
-export default function CrearTurnoModal({ open, onClose, onSaved, token }) {
+// Sirve para crear y para editar: si recibe "turno" (del resumen), es edición
+export default function CrearTurnoModal({ open, onClose, onSaved, token, turno = null }) {
+  const editando = Boolean(turno?.turno_id)
   const [form, setForm] = useState(initialState)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   
-  // 👈 NUEVO: Estado para errores por campo
+  // Errores por campo
   const [errores, setErrores] = useState({})
 
   useEffect(() => {
     if (open) {
-      setForm(initialState)
+      setForm(editando
+        ? {
+            nombre: turno.nombre || '',
+            hora_inicio: (turno.hora_inicio || '').slice(0, 5),
+            hora_fin: (turno.hora_fin || '').slice(0, 5),
+            minutos_tolerancia: turno.minutos_tolerancia ?? 10,
+          }
+        : initialState)
       setError('')
       setErrores({})
     }
-  }, [open])
+  }, [open, editando, turno])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -80,11 +89,13 @@ export default function CrearTurnoModal({ open, onClose, onSaved, token }) {
         minutos_tolerancia: Number(form.minutos_tolerancia) // 0 es válido (sin tolerancia)
       }
 
-      await turnoApi.crearTurno(token, payload)
-      onSaved?.()
+      const r = editando
+        ? await turnoApi.actualizarTurno(token, turno.turno_id, payload)
+        : await turnoApi.crearTurno(token, payload)
+      onSaved?.(r?.mensaje || (editando ? 'Turno actualizado correctamente.' : 'Turno creado correctamente.'))
       onClose()
     } catch (err) {
-      setError(err?.response?.data?.mensaje || err.message || 'Error al crear el turno')
+      setError(err?.response?.data?.mensaje || err.message || (editando ? 'Error al actualizar el turno' : 'Error al crear el turno'))
     } finally {
       setLoading(false)
     }
@@ -92,9 +103,14 @@ export default function CrearTurnoModal({ open, onClose, onSaved, token }) {
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Crear Nuevo Turno</DialogTitle>
+      <DialogTitle>{editando ? 'Editar Turno' : 'Crear Nuevo Turno'}</DialogTitle>
       <DialogContent dividers>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        {editando && turno.empleados_asignados > 0 && (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Este turno lo tienen {turno.empleados_asignados} empleado(s). El nuevo horario aplica desde su siguiente registro; lo ya registrado no cambia.
+          </Alert>
+        )}
         
         <Grid container spacing={2} sx={{ mt: 0.5 }}>
           <Grid item xs={12}>
@@ -136,7 +152,7 @@ export default function CrearTurnoModal({ open, onClose, onSaved, token }) {
       <DialogActions>
         <Button onClick={onClose} disabled={loading}>Cancelar</Button>
         <Button onClick={handleSubmit} variant="contained" disabled={loading} sx={{ bgcolor: '#00897b', '&:hover': { bgcolor: '#00695c' } }}>
-          {loading ? <CircularProgress size={20} color="inherit" /> : 'Guardar Turno'}
+          {loading ? <CircularProgress size={20} color="inherit" /> : (editando ? 'Guardar Cambios' : 'Guardar Turno')}
         </Button>
       </DialogActions>
     </Dialog>

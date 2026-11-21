@@ -20,6 +20,9 @@ export const turnoApi = {
   crearTurno: async (token, data) => 
     peticion('/api/Turno/Crear', { method: 'POST', token, body: JSON.stringify(data) }),
     
+  actualizarTurno: async (token, id, data) => 
+    peticion(`/api/Turno/Actualizar/${id}`, { method: 'PUT', token, body: JSON.stringify(data) }),
+    
   cambiarTurno: async (token, payload) => 
     peticion('/api/Turno/CambiarTurno', { method: 'PUT', token, body: JSON.stringify(payload) }),
     

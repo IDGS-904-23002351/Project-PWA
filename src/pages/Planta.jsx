@@ -6,7 +6,7 @@ import {
     FormControlLabel, Checkbox, IconButton, CircularProgress, Stack,
     useMediaQuery, useTheme
 } from '@mui/material';
-import { LocationOn, Event, Save, Refresh, Add, Edit, Delete, QrCode2 } from '@mui/icons-material';
+import { LocationOn, Event, Save, Refresh, Add, Edit, Delete, QrCode2, MyLocation, Print } from '@mui/icons-material';
 import { plantaQrApi } from '../api/plantaQrApi';
 import EncabezadoPagina from '../components/EncabezadoPagina';
 import ConfirmarDialog from '../components/ConfirmarDialog';
@@ -20,6 +20,12 @@ L.Icon.Default.mergeOptions({
     iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
     shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
+
+// El QR lleva SOLO el código guardado en la base (codigo_qr), que es lo que la app manda
+// y lo que sp_Movil_RegistrarAsistencia compara. Antes la imagen llevaba
+// "QR-Nomi-<código>-<fecha>", así que ningún escaneo coincidía.
+const urlImagenQr = (codigo, tamano) =>
+    `https://api.qrserver.com/v1/create-qr-code/?size=${tamano}x${tamano}&margin=10&data=${encodeURIComponent(codigo)}`;
 
 function MapViewUpdater({ lat, lng }) {
     const map = useMap();
@@ -60,6 +66,11 @@ export default function Planta() {
     const [nuevoFestivo, setNuevoFestivo] = useState({ id: 0, fecha: '', nombre: '', esOficial: true });
 
     const [confirmar, setConfirmar] = useState(null);
+    // Errores debajo de cada campo (antes solo salía un mensaje general o la burbuja del navegador)
+    const [erroresUbicacion, setErroresUbicacion] = useState({});
+    const [erroresFestivo, setErroresFestivo] = useState({});
+    const [errorFestivo, setErrorFestivo] = useState('');
+    const [buscandoGps, setBuscandoGps] = useState(false);
     const timeoutRef = useRef(null);
     const anioActual = new Date().getFullYear();
 
@@ -123,11 +134,47 @@ export default function Planta() {
         }, 400);
     };
 
+    // Solo para el clic en el mapa y el GPS: ahí sí se redondea a 6 decimales (~10 cm).
+    // Antes también se usaba al escribir, y al teclear "2" el campo se volvía "2.000000".
     const actualizarUbicacionPorCoords = (lat, lng) => {
-        const latStr = parseFloat(lat).toFixed(6);
-        const lngStr = parseFloat(lng).toFixed(6);
+        // wrap(): si se hace clic en una "copia" del mapa (después de desplazarlo mucho),
+        // Leaflet da longitudes como -461.58; wrap() las regresa al rango -180 a 180
+        const punto = L.latLng(Number(lat), Number(lng)).wrap();
+        const latStr = punto.lat.toFixed(6);
+        const lngStr = punto.lng.toFixed(6);
         setUbicacion(prev => ({ ...prev, latitud: latStr, longitud: lngStr }));
+        setErroresUbicacion(prev => ({ ...prev, latitud: '', longitud: '' }));
         obtenerDireccionSegura(latStr, lngStr);
+    };
+
+    // Al terminar de escribir una coordenada válida, se busca la dirección
+    const alSalirDeCoordenada = () => {
+        const la = Number(ubicacion.latitud);
+        const ln = Number(ubicacion.longitud);
+        if (String(ubicacion.latitud).trim() !== '' && String(ubicacion.longitud).trim() !== ''
+            && !isNaN(la) && !isNaN(ln) && la >= -90 && la <= 90 && ln >= -180 && ln <= 180) {
+            obtenerDireccionSegura(ubicacion.latitud, ubicacion.longitud);
+        }
+    };
+
+    // Toma la ubicación de la computadora o el celular (sirve para poner la planta donde estás y probar la app)
+    const usarMiUbicacion = () => {
+        if (!navigator.geolocation) {
+            return setMensaje({ tipo: 'error', texto: 'Este navegador no puede obtener tu ubicación.' });
+        }
+        setBuscandoGps(true);
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                actualizarUbicacionPorCoords(pos.coords.latitude, pos.coords.longitude);
+                setMensaje({ tipo: 'success', texto: `Ubicación tomada (precisión ±${Math.round(pos.coords.accuracy)} m). Revisa el pin y guarda.` });
+                setBuscandoGps(false);
+            },
+            () => {
+                setMensaje({ tipo: 'error', texto: 'No se pudo obtener tu ubicación. Revisa que el navegador tenga permiso de ubicación.' });
+                setBuscandoGps(false);
+            },
+            { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+        );
     };
 
     function MapClickHandler() {
@@ -144,13 +191,18 @@ export default function Planta() {
         // Antes un radio de 0 se cambiaba por 100 y una latitud vacía por 0 sin avisar
         const latitud = Number(ubicacion.latitud);
         const longitud = Number(ubicacion.longitud);
-        const radio = Number(ubicacion.radioToleranciaMetros);
+        const radioTexto = String(ubicacion.radioToleranciaMetros ?? '').trim();
+        const radio = Number(radioTexto);
+        const errores = {};
+        if (!String(ubicacion.nombre || '').trim()) errores.nombre = 'Escribe el nombre de la planta.';
         if (String(ubicacion.latitud).trim() === '' || isNaN(latitud) || latitud < -90 || latitud > 90)
-            return setMensaje({ tipo: 'error', texto: 'La latitud debe estar entre -90 y 90.' });
+            errores.latitud = 'La latitud debe estar entre -90 y 90.';
         if (String(ubicacion.longitud).trim() === '' || isNaN(longitud) || longitud < -180 || longitud > 180)
-            return setMensaje({ tipo: 'error', texto: 'La longitud debe estar entre -180 y 180.' });
-        if (!Number.isInteger(radio) || radio < 10 || radio > 2000)
-            return setMensaje({ tipo: 'error', texto: 'El radio debe estar entre 10 y 2000 metros.' });
+            errores.longitud = 'La longitud debe estar entre -180 y 180.';
+        if (radioTexto === '' || !Number.isInteger(radio) || radio < 10 || radio > 2000)
+            errores.radio = 'El radio debe estar entre 10 y 2000 metros.';
+        setErroresUbicacion(errores);
+        if (Object.keys(errores).length > 0) return;
 
         setSavingUbicacion(true);
         try {
@@ -192,9 +244,13 @@ export default function Planta() {
     const handleGuardarFestivo = async (e) => {
         e.preventDefault();
         if (!token) return;
+        setErrorFestivo('');
 
-        if (!nuevoFestivo.fecha) return setMensaje({ tipo: 'error', texto: 'Debes seleccionar una fecha.' });
-        if (!nuevoFestivo.nombre.trim()) return setMensaje({ tipo: 'error', texto: 'El nombre es obligatorio.' });
+        const errores = {};
+        if (!nuevoFestivo.fecha) errores.fecha = 'Debes seleccionar una fecha.';
+        if (!nuevoFestivo.nombre.trim()) errores.nombre = 'El nombre es obligatorio.';
+        setErroresFestivo(errores);
+        if (Object.keys(errores).length > 0) return;
 
         setSavingFestivo(true);
         try {
@@ -218,7 +274,8 @@ export default function Planta() {
             if (err?.response?.data?.error) errorMsg = err.response.data.error;
             else if (err?.response?.data?.mensaje) errorMsg = err.response.data.mensaje;
             else if (err?.message) errorMsg = err.message;
-            setMensaje({ tipo: 'error', texto: errorMsg });
+            // Dentro de la ventana, que se queda abierta para corregir
+            setErrorFestivo(errorMsg);
         } finally {
             setSavingFestivo(false);
         }
@@ -294,13 +351,21 @@ export default function Planta() {
                                 {qrVigente ? (
                                     <>
                                         <Box component="img" 
-                                            src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=QR-Nomi-${qrVigente.codigoQr}-${qrVigente.vigenciaInicio}`} 
-                                            alt="QR" 
+                                            src={urlImagenQr(qrVigente.codigoQr, 250)} 
+                                            alt={`QR ${qrVigente.codigoQr}`} 
                                             sx={{ width: '100%', maxWidth: 220, height: 'auto', aspectRatio: '1/1', p: 1, bgcolor: '#fff', borderRadius: 3, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }} 
                                         />
-                                        <Typography variant="caption" color="textSecondary" align="center">
-                                            Vigencia: {new Date(qrVigente.vigenciaInicio).toLocaleString()}
+                                        <Typography variant="caption" align="center" sx={{ fontFamily: 'monospace', wordBreak: 'break-all', bgcolor: '#f1f5f9', px: 1, py: 0.5, borderRadius: 1 }}>
+                                            {qrVigente.codigoQr}
                                         </Typography>
+                                        <Typography variant="caption" color="textSecondary" align="center">
+                                            Vigente desde: {new Date(qrVigente.vigenciaInicio).toLocaleString('es-MX')}<br />
+                                            No vence: sirve hasta que lo regeneres.
+                                        </Typography>
+                                        <Button size="small" startIcon={<Print />} href={urlImagenQr(qrVigente.codigoQr, 600)} target="_blank" rel="noopener"
+                                            sx={{ color: '#00897b', textTransform: 'none' }}>
+                                            Abrir para imprimir
+                                        </Button>
                                     </>
                                 ) : (
                                     <Typography variant="body2" color="textSecondary" align="center">Sin código QR activo.</Typography>
@@ -329,7 +394,7 @@ export default function Planta() {
                                     <Typography variant="h6" fontWeight="bold" sx={{ m: 0, p: 0 }}>Días Festivos ({anioActual}–{anioActual + 1})</Typography>
                                 </Stack>
                                 <Button variant="contained" size="small" startIcon={<Add />} 
-                                    onClick={() => { setNuevoFestivo({ id: 0, fecha: '', nombre: '', esOficial: true }); setOpenModalFestivo(true); }} 
+                                    onClick={() => { setNuevoFestivo({ id: 0, fecha: '', nombre: '', esOficial: true }); setErroresFestivo({}); setErrorFestivo(''); setOpenModalFestivo(true); }} 
                                     sx={{ 
                                         bgcolor: '#00897b', 
                                         '&:hover': { bgcolor: '#00695c' }, 
@@ -366,7 +431,7 @@ export default function Planta() {
                                                 <TableCell align="center">
                                                     <IconButton size="small" color="primary" onClick={() => { 
                                                         setNuevoFestivo({ id: f.id, fecha: f.fecha ? f.fecha.split('T')[0] : '', nombre: f.nombre, esOficial: f.esOficial }); 
-                                                        setOpenModalFestivo(true); 
+                                                        setErroresFestivo({}); setErrorFestivo(''); setOpenModalFestivo(true); 
                                                     }}>
                                                         <Edit fontSize="small" />
                                                     </IconButton>
@@ -428,28 +493,32 @@ export default function Planta() {
                                 
                                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, width: '100%' }}>
                                     <Box sx={{ flex: '1 1 250px' }}>
-                                        <TextField label="Nombre de la planta" size="small" fullWidth required inputProps={{ maxLength: 120 }}
-                                            value={ubicacion.nombre} onChange={(e) => setUbicacion({ ...ubicacion, nombre: e.target.value })} />
+                                        <TextField label="Nombre de la planta *" size="small" fullWidth inputProps={{ maxLength: 120 }}
+                                            value={ubicacion.nombre} onChange={(e) => { setUbicacion({ ...ubicacion, nombre: e.target.value }); setErroresUbicacion(p => ({ ...p, nombre: '' })); }}
+                                            error={!!erroresUbicacion.nombre} helperText={erroresUbicacion.nombre} />
                                     </Box>
                                     <Box sx={{ flex: '1 1 120px' }}>
-                                        <TextField label="Latitud" type="number" inputProps={{ step: "any" }} size="small" fullWidth required 
+                                        <TextField label="Latitud *" size="small" fullWidth inputProps={{ inputMode: 'decimal', maxLength: 12 }}
+                                            placeholder="21.063820"
                                             value={ubicacion.latitud} onChange={(e) => {
-                                                const val = e.target.value;
-                                                setUbicacion(prev => ({ ...prev, latitud: val }));
-                                                if (val && !isNaN(val) && ubicacion.longitud) actualizarUbicacionPorCoords(val, ubicacion.longitud);
-                                            }} />
+                                                setUbicacion(prev => ({ ...prev, latitud: e.target.value }));
+                                                setErroresUbicacion(p => ({ ...p, latitud: '' }));
+                                            }} onBlur={alSalirDeCoordenada}
+                                            error={!!erroresUbicacion.latitud} helperText={erroresUbicacion.latitud} />
                                     </Box>
                                     <Box sx={{ flex: '1 1 120px' }}>
-                                        <TextField label="Longitud" type="number" inputProps={{ step: "any" }} size="small" fullWidth required 
+                                        <TextField label="Longitud *" size="small" fullWidth inputProps={{ inputMode: 'decimal', maxLength: 12 }}
+                                            placeholder="-101.582680"
                                             value={ubicacion.longitud} onChange={(e) => {
-                                                const val = e.target.value;
-                                                setUbicacion(prev => ({ ...prev, longitud: val }));
-                                                if (val && !isNaN(val) && ubicacion.latitud) actualizarUbicacionPorCoords(ubicacion.latitud, val);
-                                            }} />
+                                                setUbicacion(prev => ({ ...prev, longitud: e.target.value }));
+                                                setErroresUbicacion(p => ({ ...p, longitud: '' }));
+                                            }} onBlur={alSalirDeCoordenada}
+                                            error={!!erroresUbicacion.longitud} helperText={erroresUbicacion.longitud} />
                                     </Box>
                                     <Box sx={{ flex: '1 1 150px' }}>
-                                        <TextField label="Radio de Tolerancia (m)" type="number" size="small" fullWidth required 
-                                            value={ubicacion.radioToleranciaMetros} onChange={(e) => setUbicacion({ ...ubicacion, radioToleranciaMetros: e.target.value })} />
+                                        <TextField label="Radio de Tolerancia (m) *" type="number" size="small" fullWidth inputProps={{ min: 10, max: 2000 }}
+                                            value={ubicacion.radioToleranciaMetros} onChange={(e) => { setUbicacion({ ...ubicacion, radioToleranciaMetros: e.target.value }); setErroresUbicacion(p => ({ ...p, radio: '' })); }}
+                                            error={!!erroresUbicacion.radio} helperText={erroresUbicacion.radio || 'De 10 a 2000 metros.'} />
                                     </Box>
                                     <Box sx={{ flex: '2 1 300px' }}>
                                         <TextField label="Dirección Física (Automática)" size="small" fullWidth 
@@ -457,12 +526,19 @@ export default function Planta() {
                                     </Box>
                                 </Box>
 
-                                <Typography variant="caption" color="textSecondary">
-                                    Haz clic en el mapa o escribe lat/lng para mover el pin y actualizar la dirección automáticamente.
-                                </Typography>
+                                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ sm: 'center' }} justifyContent="space-between">
+                                    <Typography variant="caption" color="textSecondary">
+                                        Haz clic en el mapa, escribe la latitud y longitud, o usa tu ubicación actual.
+                                    </Typography>
+                                    <Button size="small" variant="outlined" onClick={usarMiUbicacion} disabled={buscandoGps}
+                                        startIcon={buscandoGps ? <CircularProgress size={16} /> : <MyLocation />}
+                                        sx={{ color: '#00897b', borderColor: '#00897b', textTransform: 'none', borderRadius: 2, flexShrink: 0 }}>
+                                        {buscandoGps ? 'Buscando...' : 'Usar mi ubicación actual'}
+                                    </Button>
+                                </Stack>
 
                                 <Box sx={{ width: '100%', height: isMdUp ? 350 : 250, borderRadius: 3, overflow: 'hidden', border: '1px solid #cbd5e1', position: 'relative' }}>
-                                    <MapContainer center={[latDef, lngDef]} zoom={15} style={{ width: '100%', height: '100%', zIndex: 1 }}>
+                                    <MapContainer center={[latDef, lngDef]} zoom={15} worldCopyJump style={{ width: '100%', height: '100%', zIndex: 1 }}>
                                         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OpenStreetMap' />
                                         <MapClickHandler />
                                         <MapViewUpdater lat={ubicacion.latitud} lng={ubicacion.longitud} />
@@ -479,28 +555,29 @@ export default function Planta() {
 
             <Dialog open={openModalFestivo} onClose={() => !savingFestivo && setOpenModalFestivo(false)} maxWidth="sm" fullWidth>
                 <DialogTitle sx={{ fontWeight: 'bold' }}>{nuevoFestivo.id ? 'Editar Día Festivo' : 'Registrar Nuevo Día Festivo'}</DialogTitle>
-                <Box component="form" onSubmit={handleGuardarFestivo}>
+                <Box component="form" onSubmit={handleGuardarFestivo} noValidate>
                     <DialogContent dividers sx={{ py: 3 }}>
                         <Stack spacing={3}>
+                            {errorFestivo && <Alert severity="error">{errorFestivo}</Alert>}
                             <TextField 
-                                label="Fecha del día festivo" 
+                                label="Fecha del día festivo *" 
                                 type="date" 
                                 size="medium" 
                                 fullWidth 
-                                required 
                                 InputLabelProps={{ shrink: true }} 
                                 value={nuevoFestivo.fecha} 
-                                onChange={(e) => setNuevoFestivo({ ...nuevoFestivo, fecha: e.target.value })} 
+                                onChange={(e) => { setNuevoFestivo({ ...nuevoFestivo, fecha: e.target.value }); setErroresFestivo(p => ({ ...p, fecha: '' })); }} 
+                                error={!!erroresFestivo.fecha} helperText={erroresFestivo.fecha}
                             />
                             <TextField 
-                                label="Nombre o Descripción" 
+                                label="Nombre o Descripción *" 
                                 size="medium" 
                                 fullWidth 
-                                required 
                                 placeholder="Ej. Día de la Independencia" 
                                 value={nuevoFestivo.nombre} 
-                                onChange={(e) => setNuevoFestivo({ ...nuevoFestivo, nombre: e.target.value })} 
+                                onChange={(e) => { setNuevoFestivo({ ...nuevoFestivo, nombre: e.target.value }); setErroresFestivo(p => ({ ...p, nombre: '' })); }} 
                                 inputProps={{ maxLength: 120 }}
+                                error={!!erroresFestivo.nombre} helperText={erroresFestivo.nombre}
                             />
                             <FormControlLabel 
                                 control={<Checkbox checked={nuevoFestivo.esOficial} onChange={(e) => setNuevoFestivo({ ...nuevoFestivo, esOficial: e.target.checked })} sx={{ color: '#00897b', '&.Mui-checked': { color: '#00897b' } }} />} 

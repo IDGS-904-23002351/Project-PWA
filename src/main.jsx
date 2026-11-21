@@ -13,6 +13,13 @@ import { AuthProvider } from './context/AuthContext.jsx'
 import './index.css'
 import theme from './theme.js'
 
+// Edge (y a veces otros navegadores) guarda una "foto" de la página al salir de ella y la
+// muestra tal cual al presionar Atrás, aunque ya se haya cerrado la sesión. Si la página
+// viene de esa foto, se recarga para que la app revise la sesión de nuevo.
+window.addEventListener('pageshow', (evento) => {
+  if (evento.persisted) window.location.reload()
+})
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ThemeProvider theme={theme}>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
-  Button, MenuItem, TextField, CircularProgress, Alert
+  Button, MenuItem, TextField, CircularProgress, Alert, Typography
 } from '@mui/material'
 import { turnoApi } from '../api/turnoApi'
 
@@ -13,7 +13,8 @@ export default function CambiarTurnoModal({ open, onClose, onSaved, empleado, tu
 
   useEffect(() => {
     if (open && empleado) {
-      setNuevoTurno(empleado.turno_id ? String(empleado.turno_id) : '')
+      // Empieza sin elegir: el turno actual se muestra aparte y no sale en la lista
+      setNuevoTurno('')
       setError('')
       setErrorCampo('')
     }
@@ -35,8 +36,8 @@ export default function CambiarTurnoModal({ open, onClose, onSaved, empleado, tu
         nuevo_turno_id: parseInt(nuevoTurno, 10)
       }
 
-      await turnoApi.cambiarTurno(token, payload)
-      onSaved?.()
+      const r = await turnoApi.cambiarTurno(token, payload)
+      onSaved?.(r?.mensaje || 'Turno actualizado correctamente.')
       onClose()
     } catch (err) {
       setError(err?.response?.data?.mensaje || err.message || 'Error al cambiar el turno')
@@ -50,13 +51,19 @@ export default function CambiarTurnoModal({ open, onClose, onSaved, empleado, tu
       <DialogTitle>Cambiar Turno de Empleado</DialogTitle>
       <DialogContent dividers>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        {empleado?.nombre && (
+          <Typography variant="body2" sx={{ mb: 1 }}><b>{empleado.nombre}</b></Typography>
+        )}
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+          Turno actual: {turnos.find((t) => String(t.turno_id) === String(empleado?.turno_id))?.nombre || 'Sin turno'}
+        </Typography>
         <TextField
           select fullWidth label="Nuevo Turno" value={nuevoTurno}
           onChange={(e) => { setNuevoTurno(e.target.value); setErrorCampo(''); }}
           sx={{ mt: 1 }}
           error={!!errorCampo} helperText={errorCampo}
         >
-          {turnos.map((t) => (
+          {turnos.filter((t) => String(t.turno_id) !== String(empleado?.turno_id)).map((t) => (
             <MenuItem key={t.turno_id} value={String(t.turno_id)}>
               {t.nombre} ({t.horario})
             </MenuItem>

@@ -27,6 +27,8 @@ const COLORS = {
   chipAdministrativo: { bg: '#e3f2fd', text: '#1565c0' }
 }
 
+const TAMANO_PAGINA = 10
+
 const getInitials = (fullName) => {
   if (!fullName || fullName === 'Sin nombre') return '??'
   const parts = fullName.trim().split(' ')
@@ -73,7 +75,7 @@ export default function TurnosPage() {
     try {
       const [resResumen, resAsignaciones] = await Promise.all([
         turnoApi.obtenerResumen(token).catch(() => []),
-        turnoApi.listarAsignaciones(token, buscar, turnoFiltro, '', pagina, 10).catch(() => null)
+        turnoApi.listarAsignaciones(token, buscarAplicado, turnoFiltro, '', pagina, TAMANO_PAGINA).catch(() => null)
       ])
       
       setResumen(Array.isArray(resResumen) ? resResumen : [])
@@ -97,15 +99,24 @@ export default function TurnosPage() {
     }
   }
 
+  // Búsqueda en tiempo real: espera 400 ms después de la última tecla
+  const [buscarAplicado, setBuscarAplicado] = useState('')
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setBuscarAplicado(buscar.trim())
+      setPagina(1)
+    }, 400)
+    return () => clearTimeout(t)
+  }, [buscar])
+
   useEffect(() => {
     cargarDatos()
-  }, [token, pagina, turnoFiltro])
+  }, [token, pagina, turnoFiltro, buscarAplicado])
 
-  const handleBuscarKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      setPagina(1)
-      cargarDatos()
-    }
+  const [turnoEditar, setTurnoEditar] = useState(null)
+  const alGuardar = (mensaje) => {
+    if (mensaje) setAviso({ tipo: 'success', texto: mensaje })
+    cargarDatos()
   }
 
   const [confirmar, setConfirmar] = useState(null)
@@ -133,7 +144,9 @@ export default function TurnosPage() {
   const abrirModalCambiar = (asig) => {
     setEmpleadoSeleccionado({
       id: asig.empleado?.id || asig.empleado_id,
-      turno_id: asig.empleado?.turno_id || asig.turno_id
+      // turno_id viene como objeto { id, nombre } desde el back
+      turno_id: asig.empleado?.turno_id?.id ?? asig.empleado?.turno_id ?? asig.turno_id,
+      nombre: asig.empleado?.persona_id?.nombre || ''
     })
     setModalCambiarOpen(true)
   }
@@ -144,7 +157,7 @@ export default function TurnosPage() {
         titulo="Turnos"
         descripcion="Gestiona horarios y asignaciones del personal."
         acciones={
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => setModalCrearOpen(true)} sx={{ bgcolor: COLORS.primary, '&:hover': { bgcolor: COLORS.primaryHover }, textTransform: 'none', borderRadius: 2, px: 2.5, fontWeight: 600 }}>
+          <Button variant="contained" startIcon={<AddIcon />} onClick={() => { setTurnoEditar(null); setModalCrearOpen(true) }} sx={{ bgcolor: COLORS.primary, '&:hover': { bgcolor: COLORS.primaryHover }, textTransform: 'none', borderRadius: 2, px: 2.5, fontWeight: 600 }}>
             Nuevo turno
           </Button>
         }
@@ -178,6 +191,11 @@ export default function TurnosPage() {
                   <Box display="flex" alignItems="center" gap={1}>
                     <Typography variant="body1" fontWeight="bold" color={COLORS.textMain}>{turno.horario}</Typography>
                     <Chip label={`${turno.empleados_asignados} empleados`} size="small" sx={{ bgcolor: isAdmin ? COLORS.chipAdministrativo.bg : COLORS.chipOperativo.bg, color: isAdmin ? COLORS.chipAdministrativo.text : COLORS.chipOperativo.text, fontWeight: 600, borderRadius: 1, height: 24, fontSize: '0.75rem' }} />
+                    <Tooltip title="Editar turno">
+                      <IconButton size="small" onClick={() => { setTurnoEditar(turno); setModalCrearOpen(true) }}>
+                        <EditIcon fontSize="small" sx={{ color: COLORS.primary }} />
+                      </IconButton>
+                    </Tooltip>
                     <Tooltip title="Eliminar turno">
                       <IconButton size="small" onClick={() => handleEliminarTurno(turno.turno_id)}>
                         <DeleteIcon fontSize="small" color="error" />
@@ -209,11 +227,10 @@ export default function TurnosPage() {
             </TextField>
 
             <TextField
-              placeholder="Buscar (Enter)"
+              placeholder="Buscar empleado o departamento"
               size="small"
               value={buscar}
               onChange={(e) => setBuscar(e.target.value)}
-              onKeyDown={handleBuscarKeyPress}
               InputProps={{ startAdornment: (<InputAdornment position="start"><SearchIcon color="action" fontSize="small" /></InputAdornment>) }}
               sx={{ width: 250, '& .MuiOutlinedInput-root': { borderRadius: 2, bgcolor: '#f8f9fa', '& fieldset': { borderColor: 'transparent' }, '&:hover fieldset': { borderColor: COLORS.border }, '&.Mui-focused fieldset': { borderColor: COLORS.primary } } }}
             />
@@ -279,21 +296,22 @@ export default function TurnosPage() {
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3, gap: 2, alignItems: 'center' }}>
         <Typography variant="body2" color="textSecondary">Total: {total}</Typography>
         <Button size="small" disabled={pagina === 1} onClick={() => setPagina(pagina - 1)} sx={{ color: COLORS.primary, textTransform: 'none' }}>Anterior</Button>
-        <Typography variant="body2" fontWeight="bold">Página {pagina}</Typography>
-        <Button size="small" disabled={pagina * 10 >= total} onClick={() => setPagina(pagina + 1)} sx={{ color: COLORS.primary, textTransform: 'none' }}>Siguiente</Button>
+        <Typography variant="body2" fontWeight="bold">Página {pagina} de {Math.max(1, Math.ceil(total / TAMANO_PAGINA))}</Typography>
+        <Button size="small" disabled={pagina * TAMANO_PAGINA >= total} onClick={() => setPagina(pagina + 1)} sx={{ color: COLORS.primary, textTransform: 'none' }}>Siguiente</Button>
       </Box>
 
       <CrearTurnoModal 
         open={modalCrearOpen} 
         onClose={() => setModalCrearOpen(false)} 
-        onSaved={() => cargarDatos()} 
+        onSaved={alGuardar} 
         token={token} 
+        turno={turnoEditar}
       />
       
       <CambiarTurnoModal 
         open={modalCambiarOpen} 
         onClose={() => setModalCambiarOpen(false)} 
-        onSaved={() => cargarDatos()} 
+        onSaved={alGuardar} 
         empleado={empleadoSeleccionado}
         turnos={resumen}
         token={token} 
