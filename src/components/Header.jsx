@@ -3,10 +3,12 @@ import { Box, InputBase, Avatar, Typography, IconButton, Badge, Menu, MenuItem }
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined'
 import NotificationsNoneOutlinedIcon from '@mui/icons-material/NotificationsNoneOutlined'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
+import MenuIcon from '@mui/icons-material/Menu'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
-export default function Header() {
+// onAbrirMenu: solo llega en pantallas chicas; muestra el botón ☰ que abre el menú
+export default function Header({ onAbrirMenu }) {
   const { sesion, cerrarSesion } = useAuth()
   const navegar = useNavigate()
   const [anchorEl, setAnchorEl] = useState(null)
@@ -34,22 +36,28 @@ export default function Header() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        px: 4,
+        gap: 1,
+        px: { xs: 2, md: 4 },
         position: 'sticky',
         top: 0,
         zIndex: 1100,
       }}
     >
+      {onAbrirMenu && (
+        <IconButton onClick={onAbrirMenu} aria-label="Abrir menú" sx={{ color: '#0b132b', mr: 1 }}>
+          <MenuIcon />
+        </IconButton>
+      )}
       <Box
         sx={{
-          display: 'flex',
+          display: { xs: 'none', sm: 'flex' },
           alignItems: 'center',
           bgcolor: '#f8fafc',
           px: 2,
           py: 0.8,
           borderRadius: 2.5,
           border: '1px solid #e2e8f0',
-          width: 320,
+          width: { sm: 240, md: 320 },
         }}
       >
         <SearchOutlinedIcon sx={{ color: '#94a3b8', mr: 1, fontSize: 20 }} />
@@ -74,7 +82,7 @@ export default function Header() {
           ⌘ K
         </Box>
       </Box>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, ml: 'auto' }}>
         <IconButton size="small" sx={{ color: '#64748b' }}>
           <Badge badgeContent={1} color="error" variant="dot">
             <NotificationsNoneOutlinedIcon />
@@ -120,7 +128,7 @@ export default function Header() {
           anchorEl={anchorEl}
           open={Boolean(anchorEl)}
           onClose={handleCloseMenu}
-          PaperProps={{ sx: { borderRadius: 2, mt: 1, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' } }}
+          slotProps={{ paper: { sx: { borderRadius: 2, mt: 1, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' } } }}
         >
           <MenuItem onClick={() => { handleCloseMenu(); navegar('/perfil') }}>
             Mi perfil

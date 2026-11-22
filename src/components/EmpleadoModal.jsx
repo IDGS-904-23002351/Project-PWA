@@ -382,19 +382,19 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
         <Typography variant="overline" color="textSecondary">Datos personales</Typography>
         <Grid container spacing={2} sx={{ mt: 0.5, mb: 2 }}>
           <Grid item xs={12} sm={4}>
-            <TextField fullWidth label="Nombre *" name="nombre" inputProps={{ maxLength: 80 }} value={form.nombre} onChange={handleChange} error={!!erroresCampo.nombre} helperText={erroresCampo.nombre} />
+            <TextField fullWidth label="Nombre *" name="nombre" slotProps={{ htmlInput: { maxLength: 80 } }} value={form.nombre} onChange={handleChange} error={!!erroresCampo.nombre} helperText={erroresCampo.nombre} />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <TextField fullWidth label="Apellido paterno *" name="apellido_Paterno" inputProps={{ maxLength: 80 }} value={form.apellido_Paterno} onChange={handleChange} error={!!erroresCampo.apellido_Paterno} helperText={erroresCampo.apellido_Paterno} />
+            <TextField fullWidth label="Apellido paterno *" name="apellido_Paterno" slotProps={{ htmlInput: { maxLength: 80 } }} value={form.apellido_Paterno} onChange={handleChange} error={!!erroresCampo.apellido_Paterno} helperText={erroresCampo.apellido_Paterno} />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <TextField fullWidth label="Apellido materno" name="apellido_Materno" inputProps={{ maxLength: 80 }} value={form.apellido_Materno} onChange={handleChange} />
+            <TextField fullWidth label="Apellido materno" name="apellido_Materno" slotProps={{ htmlInput: { maxLength: 80 } }} value={form.apellido_Materno} onChange={handleChange} />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <TextField fullWidth label="Correo *" name="correo" inputProps={{ maxLength: 150 }} type="email" value={form.correo} onChange={handleChange} error={!!erroresCampo.correo} helperText={erroresCampo.correo} />
+            <TextField fullWidth label="Correo *" name="correo" slotProps={{ htmlInput: { maxLength: 150 } }} type="email" value={form.correo} onChange={handleChange} error={!!erroresCampo.correo} helperText={erroresCampo.correo} />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <TextField fullWidth label="Teléfono" name="telefono" inputProps={{ maxLength: 10, inputMode: 'numeric' }} value={form.telefono} onChange={handleChange} error={!!erroresCampo.telefono} helperText={erroresCampo.telefono} />
+            <TextField fullWidth label="Teléfono" name="telefono" slotProps={{ htmlInput: { maxLength: 10, inputMode: 'numeric' } }} value={form.telefono} onChange={handleChange} error={!!erroresCampo.telefono} helperText={erroresCampo.telefono} />
           </Grid>
 
           <Grid item xs={12}>
@@ -410,7 +410,7 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
         {form.modo_direccion === 'existente' ? (
           <Grid container spacing={2} sx={{ mb: 3 }}>
             <Grid item xs={12} sm={6}>
-              <TextField select fullWidth label="Dirección *" name="direccion_id" value={form.direccion_id} onChange={handleChange} SelectProps={selectProps} sx={{ minWidth: 200 }} error={!!erroresCampo.direccion_id} helperText={erroresCampo.direccion_id}>
+              <TextField select fullWidth label="Dirección *" name="direccion_id" value={form.direccion_id} onChange={handleChange} slotProps={{ select: selectProps }} sx={{ minWidth: 200 }} error={!!erroresCampo.direccion_id} helperText={erroresCampo.direccion_id}>
                 {direcciones.map((d) => {
                   const val = d.Id ?? d.id
                   const nom = d.nombre || d.Nombre || d.calle || `Dirección ${val}`
@@ -427,22 +427,22 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
 
             <Grid container spacing={2} sx={{ mb: 3 }}>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="Calle" name="dir_calle" inputProps={{ maxLength: 150 }} value={form.dir_calle} onChange={handleChange} error={!!erroresCampo.dir_calle} helperText={erroresCampo.dir_calle} />
+                <TextField fullWidth label="Calle" name="dir_calle" slotProps={{ htmlInput: { maxLength: 150 } }} value={form.dir_calle} onChange={handleChange} error={!!erroresCampo.dir_calle} helperText={erroresCampo.dir_calle} />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="Colonia" name="dir_colonia" inputProps={{ maxLength: 100 }} value={form.dir_colonia} onChange={handleChange} />
+                <TextField fullWidth label="Colonia" name="dir_colonia" slotProps={{ htmlInput: { maxLength: 100 } }} value={form.dir_colonia} onChange={handleChange} />
               </Grid>
               <Grid item xs={12} sm={4}>
-                <TextField fullWidth label="Ciudad" name="dir_ciudad" inputProps={{ maxLength: 100 }} value={form.dir_ciudad} onChange={handleChange} />
+                <TextField fullWidth label="Ciudad" name="dir_ciudad" slotProps={{ htmlInput: { maxLength: 100 } }} value={form.dir_ciudad} onChange={handleChange} />
               </Grid>
               <Grid item xs={12} sm={4}>
-                <TextField fullWidth label="Estado" name="dir_estado" inputProps={{ maxLength: 100 }} value={form.dir_estado} onChange={handleChange} />
+                <TextField fullWidth label="Estado" name="dir_estado" slotProps={{ htmlInput: { maxLength: 100 } }} value={form.dir_estado} onChange={handleChange} />
               </Grid>
               <Grid item xs={12} sm={4}>
-                <TextField fullWidth label="Código postal" name="dir_cp" inputProps={{ maxLength: 5, inputMode: 'numeric' }} value={form.dir_cp} onChange={handleChange} error={!!erroresCampo.dir_cp} helperText={erroresCampo.dir_cp} />
+                <TextField fullWidth label="Código postal" name="dir_cp" slotProps={{ htmlInput: { maxLength: 5, inputMode: 'numeric' } }} value={form.dir_cp} onChange={handleChange} error={!!erroresCampo.dir_cp} helperText={erroresCampo.dir_cp} />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="País" name="dir_pais" inputProps={{ maxLength: 80 }} value={form.dir_pais} onChange={handleChange} />
+                <TextField fullWidth label="País" name="dir_pais" slotProps={{ htmlInput: { maxLength: 80 } }} value={form.dir_pais} onChange={handleChange} />
               </Grid>
             </Grid>
           </>
@@ -452,20 +452,20 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
         <Typography variant="overline" color="textSecondary">Datos laborales</Typography>
         <Grid container spacing={2} sx={{ mt: 0.5, mb: 2 }}>
           <Grid item xs={12} sm={4}>
-            <TextField fullWidth label="RFC *" name="rfc" inputProps={{ maxLength: 13 }} value={form.rfc} onChange={handleChange} error={!!erroresCampo.rfc} helperText={erroresCampo.rfc} />
+            <TextField fullWidth label="RFC *" name="rfc" slotProps={{ htmlInput: { maxLength: 13 } }} value={form.rfc} onChange={handleChange} error={!!erroresCampo.rfc} helperText={erroresCampo.rfc} />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <TextField fullWidth label="CURP *" name="curp" inputProps={{ maxLength: 18 }} value={form.curp} onChange={handleChange} error={!!erroresCampo.curp} helperText={erroresCampo.curp} />
+            <TextField fullWidth label="CURP *" name="curp" slotProps={{ htmlInput: { maxLength: 18 } }} value={form.curp} onChange={handleChange} error={!!erroresCampo.curp} helperText={erroresCampo.curp} />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <TextField fullWidth label="NSS *" name="nss" inputProps={{ maxLength: 11, inputMode: 'numeric' }} value={form.nss} onChange={handleChange} error={!!erroresCampo.nss} helperText={erroresCampo.nss} />
+            <TextField fullWidth label="NSS *" name="nss" slotProps={{ htmlInput: { maxLength: 11, inputMode: 'numeric' } }} value={form.nss} onChange={handleChange} error={!!erroresCampo.nss} helperText={erroresCampo.nss} />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <TextField fullWidth label="Fecha de ingreso" name="fecha_ingreso" type="date" value={form.fecha_ingreso} onChange={handleChange} InputLabelProps={{ shrink: true }} inputProps={{ max: fechaMaximaIngreso() }} error={!!erroresCampo.fecha_ingreso} helperText={erroresCampo.fecha_ingreso} />
+            <TextField fullWidth label="Fecha de ingreso" name="fecha_ingreso" type="date" value={form.fecha_ingreso} onChange={handleChange} slotProps={{ inputLabel: { shrink: true }, htmlInput: { max: fechaMaximaIngreso() } }} error={!!erroresCampo.fecha_ingreso} helperText={erroresCampo.fecha_ingreso} />
           </Grid>
 
           <Grid item xs={12} sm={4}>
-            <TextField select fullWidth label="Empresa *" name="empresa_id" value={form.empresa_id} onChange={handleChange} SelectProps={selectProps} sx={{ minWidth: 140 }} error={!!erroresCampo.empresa_id} helperText={erroresCampo.empresa_id}>
+            <TextField select fullWidth label="Empresa *" name="empresa_id" value={form.empresa_id} onChange={handleChange} slotProps={{ select: selectProps }} sx={{ minWidth: 140 }} error={!!erroresCampo.empresa_id} helperText={erroresCampo.empresa_id}>
               {empresas.map((e) => {
                 const val = e.Id ?? e.id
                 return <MenuItem key={val} value={val}>{e.nombre || e.Nombre || e.razon_social}</MenuItem>
@@ -473,7 +473,7 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
             </TextField>
           </Grid>
           <Grid item xs={12} sm={4}>
-            <TextField select fullWidth label="Sede *" name="sede_id" value={form.sede_id} onChange={handleChange} SelectProps={selectProps} sx={{ minWidth: 140 }} error={!!erroresCampo.sede_id} helperText={erroresCampo.sede_id}>
+            <TextField select fullWidth label="Sede *" name="sede_id" value={form.sede_id} onChange={handleChange} slotProps={{ select: selectProps }} sx={{ minWidth: 140 }} error={!!erroresCampo.sede_id} helperText={erroresCampo.sede_id}>
               {sedes.map((s) => {
                 const val = s.Id ?? s.id
                 return <MenuItem key={val} value={val}>{s.nombre || s.Nombre}</MenuItem>
@@ -481,7 +481,7 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
             </TextField>
           </Grid>
           <Grid item xs={12} sm={4}>
-            <TextField select fullWidth label="Departamento *" name="departamento_id" value={form.departamento_id} onChange={handleChange} SelectProps={selectProps} sx={{ minWidth: 160 }} error={!!erroresCampo.departamento_id} helperText={erroresCampo.departamento_id}>
+            <TextField select fullWidth label="Departamento *" name="departamento_id" value={form.departamento_id} onChange={handleChange} slotProps={{ select: selectProps }} sx={{ minWidth: 160 }} error={!!erroresCampo.departamento_id} helperText={erroresCampo.departamento_id}>
               {departamentos.map((d) => {
                 const val = d.Id ?? d.id
                 return <MenuItem key={val} value={val}>{d.nombre || d.Nombre}</MenuItem>
@@ -489,7 +489,7 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
             </TextField>
           </Grid>
           <Grid item xs={12} sm={4}>
-            <TextField select fullWidth label="Turno *" name="turno_id" value={form.turno_id} onChange={handleChange} SelectProps={selectProps} sx={{ minWidth: 140 }} error={!!erroresCampo.turno_id} helperText={erroresCampo.turno_id}>
+            <TextField select fullWidth label="Turno *" name="turno_id" value={form.turno_id} onChange={handleChange} slotProps={{ select: selectProps }} sx={{ minWidth: 140 }} error={!!erroresCampo.turno_id} helperText={erroresCampo.turno_id}>
               {turnos.map((t) => {
                 const val = t.Id ?? t.id
                 return <MenuItem key={val} value={val}>{t.nombre || t.Nombre}</MenuItem>
@@ -505,13 +505,11 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
               value={form.salario_diario}
               onChange={handleChange}
               error={!!erroresCampo.salario_diario}
-              helperText={erroresCampo.salario_diario || `Mínimo $${SALARIO_MINIMO.toFixed(2)}. La nómina usa este salario.`}
-              inputProps={{ inputMode: 'decimal' }}
-              InputProps={{ startAdornment: <Typography color="textSecondary" sx={{ mr: 0.5 }}>$</Typography> }}
+              helperText={erroresCampo.salario_diario || `Mínimo $${SALARIO_MINIMO.toFixed(2)}. La nómina usa este salario.`} slotProps={{ htmlInput: { inputMode: 'decimal' }, input: { startAdornment: <Typography color="textSecondary" sx={{ mr: 0.5 }}>$</Typography> } }}
             />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <TextField select fullWidth label="Tipo de contrato *" name="tipo_contrato_id" value={form.tipo_contrato_id} onChange={handleChange} SelectProps={selectProps} sx={{ minWidth: 160 }} error={!!erroresCampo.tipo_contrato_id} helperText={erroresCampo.tipo_contrato_id}>
+            <TextField select fullWidth label="Tipo de contrato *" name="tipo_contrato_id" value={form.tipo_contrato_id} onChange={handleChange} slotProps={{ select: selectProps }} sx={{ minWidth: 160 }} error={!!erroresCampo.tipo_contrato_id} helperText={erroresCampo.tipo_contrato_id}>
               {(tiposContrato.length ? tiposContrato : [{ id: 1, nombre: 'INDEFINIDO' }, { id: 2, nombre: 'TEMPORAL' }]).map((t) => {
                 const val = t.Id ?? t.id
                 const nom = t.nombre || t.Nombre || ''
@@ -522,7 +520,7 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
 
           {esEdicion && (
             <Grid item xs={12} sm={4}>
-              <TextField select fullWidth label="Estado" name="estado" value={form.estado} onChange={handleChange} SelectProps={selectProps} sx={{ minWidth: 140 }}>
+              <TextField select fullWidth label="Estado" name="estado" value={form.estado} onChange={handleChange} slotProps={{ select: selectProps }} sx={{ minWidth: 140 }}>
                 <MenuItem value="ACTIVO">Activo</MenuItem>
                 <MenuItem value="INACTIVO">Inactivo</MenuItem>
               </TextField>
@@ -536,7 +534,7 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
             <Typography variant="overline" color="textSecondary">Cuenta de usuario</Typography>
             <Grid container spacing={2} sx={{ mt: 0.5 }}>
               <Grid item xs={12} sm={4}>
-                <TextField select fullWidth label="Rol *" name="rol_id" value={form.rol_id} onChange={handleChange} SelectProps={selectProps} sx={{ minWidth: 140 }} error={!!erroresCampo.rol_id} helperText={erroresCampo.rol_id}>
+                <TextField select fullWidth label="Rol *" name="rol_id" value={form.rol_id} onChange={handleChange} slotProps={{ select: selectProps }} sx={{ minWidth: 140 }} error={!!erroresCampo.rol_id} helperText={erroresCampo.rol_id}>
                   {roles.map((r) => {
                     const val = r.Id ?? r.id
                     return <MenuItem key={val} value={val}>{r.nombre || r.Nombre}</MenuItem>
@@ -544,10 +542,10 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
                 </TextField>
               </Grid>
               <Grid item xs={12} sm={4}>
-                <TextField fullWidth label="Nombre de usuario *" name="nombre_usuario" inputProps={{ maxLength: 50 }} value={form.nombre_usuario} onChange={handleChange} error={!!erroresCampo.nombre_usuario} helperText={erroresCampo.nombre_usuario} />
+                <TextField fullWidth label="Nombre de usuario *" name="nombre_usuario" slotProps={{ htmlInput: { maxLength: 50 } }} value={form.nombre_usuario} onChange={handleChange} error={!!erroresCampo.nombre_usuario} helperText={erroresCampo.nombre_usuario} />
               </Grid>
               <Grid item xs={12} sm={4}>
-                <TextField fullWidth label="Contraseña *" name="contrasena" inputProps={{ maxLength: 50 }} type="password" value={form.contrasena} onChange={handleChange} error={!!erroresCampo.contrasena} helperText={erroresCampo.contrasena} />
+                <TextField fullWidth label="Contraseña *" name="contrasena" slotProps={{ htmlInput: { maxLength: 50 } }} type="password" value={form.contrasena} onChange={handleChange} error={!!erroresCampo.contrasena} helperText={erroresCampo.contrasena} />
               </Grid>
             </Grid>
           </>

@@ -4,6 +4,10 @@ import {
   Box,
   Button,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   InputAdornment,
   MenuItem,
   Paper,
@@ -40,8 +44,29 @@ function Cambio({ antes, despues }) {
   )
 }
 
+// Si el texto es JSON, se muestra con un renglón por dato; si no, tal cual
+function TextoCambio({ valor }) {
+  if (!valor) return <Typography color="text.secondary">—</Typography>
+  let mostrar = valor
+  try {
+    const objeto = JSON.parse(valor)
+    if (objeto && typeof objeto === 'object') {
+      mostrar = Object.entries(objeto).map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : v}`).join('\n')
+    }
+  } catch {
+    // no es JSON
+  }
+  return (
+    <Box component="pre" sx={{ m: 0, p: 1.5, bgcolor: '#f8fafc', borderRadius: 1, fontSize: 13, whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontFamily: 'inherit' }}>
+      {mostrar}
+    </Box>
+  )
+}
+
 export default function Bitacora() {
   const llamar = useApi()
+  // Movimiento abierto en la ventana de detalle (clic en un renglón)
+  const [detalle, setDetalle] = useState(null)
   const [filtros, setFiltros] = useState(FILTROS_VACIOS)
   const [buscarAplicado, setBuscarAplicado] = useState('')
   const [pagina, setPagina] = useState(0) 
@@ -186,7 +211,7 @@ export default function Bitacora() {
 
               {!cargando &&
                 datos.registros.map((r) => (
-                  <TableRow key={r.id} hover>
+                  <TableRow key={r.id} hover onClick={() => setDetalle(r)} sx={{ cursor: 'pointer' }}>
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>{fechaHora(r.fechaHora)}</TableCell>
                     <TableCell>
                       <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{r.usuario}</Typography>
@@ -217,6 +242,10 @@ export default function Bitacora() {
           </Table>
         </TableContainer>
 
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', px: 2, pt: 1 }}>
+          Haz clic en un renglón para ver el detalle del cambio.
+        </Typography>
+
         <TablePagination
           component="div"
           count={datos.total}
@@ -232,6 +261,28 @@ export default function Bitacora() {
           labelDisplayedRows={({ from, to, count }) => `${from}–${to} de ${count}`}
         />
       </Paper>
+
+      <Dialog open={Boolean(detalle)} onClose={() => setDetalle(null)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 'bold' }}>
+          {detalle && etiquetaAccion(detalle.accion)}
+          <Typography variant="body2" color="text.secondary">
+            {detalle && fechaHora(detalle.fechaHora)} · {detalle?.usuario}{detalle?.nombreUsuario ? ` (${detalle.nombreUsuario})` : ''}
+          </Typography>
+        </DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="subtitle2" sx={{ mb: 0.5 }}>Entidad</Typography>
+          <Typography sx={{ mb: 2 }}>
+            {detalle?.tablaAfectada ? `${detalle.tablaAfectada}${detalle.registroId ? ` #${detalle.registroId}` : ''}` : '—'}
+          </Typography>
+          <Typography variant="subtitle2" sx={{ mb: 0.5 }}>Antes</Typography>
+          <TextoCambio valor={detalle?.datosAntes} />
+          <Typography variant="subtitle2" sx={{ mt: 2, mb: 0.5 }}>Después</Typography>
+          <TextoCambio valor={detalle?.datosDespues} />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDetalle(null)} sx={{ textTransform: 'none' }}>Cerrar</Button>
+        </DialogActions>
+      </Dialog>
     </>
   )
 }

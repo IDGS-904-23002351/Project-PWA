@@ -3,7 +3,7 @@ import {
   Box, Typography, Button, TextField, MenuItem, Select,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Paper, Avatar, Chip, CircularProgress, Grid, Card, CardContent,
-  Snackbar, Alert
+  Alert
 } from '@mui/material';
 import { Download, CheckCircle, AccessTime, History, Description } from '@mui/icons-material';
 import { reportesApi } from '../api/reportesApi';
@@ -33,7 +33,9 @@ export default function Reportes() {
   const [activeTab, setActiveTab] = useState('asistencia'); 
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
+  // Aviso arriba de la tabla (antes era un Snackbar abajo a la derecha, distinto al resto de la web)
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'error' });
+  const [erroresFecha, setErroresFecha] = useState({});
   // Departamentos activos para el filtro
   useEffect(() => {
     if (!token) return;
@@ -44,14 +46,14 @@ export default function Reportes() {
 
   const handleAplicarFiltros = async () => {
     if (!token) return;
-    if (!fechaInicio || !fechaFin) {
-      setSnackbar({ open: true, message: 'Elige la fecha de inicio y la de fin.', severity: 'warning' });
-      return;
-    }
-    if (fechaFin < fechaInicio) {
-      setSnackbar({ open: true, message: 'La fecha de fin no puede ser antes que la de inicio.', severity: 'warning' });
-      return;
-    }
+    // Errores de fechas debajo del campo, como en los demás módulos
+    const errores = {};
+    if (!fechaInicio) errores.inicio = 'Elige la fecha de inicio.';
+    if (!fechaFin) errores.fin = 'Elige la fecha de fin.';
+    if (fechaInicio && fechaFin && fechaFin < fechaInicio) errores.fin = 'La fecha de fin no puede ser antes que la de inicio.';
+    setErroresFecha(errores);
+    if (Object.keys(errores).length > 0) return;
+    setSnackbar({ open: false, message: '', severity: 'error' });
     setLoading(true);
   
     const filtros = {
@@ -268,6 +270,7 @@ export default function Reportes() {
     ventana.document.close();
     ventana.focus();
     ventana.print();
+    setSnackbar({ open: true, message: 'Se abrió la ventana de impresión: en "Destino" elige "Guardar como PDF".', severity: 'info' });
   };
 
   return (
@@ -319,19 +322,19 @@ export default function Reportes() {
         <TextField
           label="Inicio"
           type="date"
-          size="small"
-          InputLabelProps={{ shrink: true }}
+          size="small" slotProps={{ inputLabel: { shrink: true } }}
           value={fechaInicio}
-          onChange={(e) => setFechaInicio(e.target.value)}
+          onChange={(e) => { setFechaInicio(e.target.value); setErroresFecha((p) => ({ ...p, inicio: '' })); }}
+          error={!!erroresFecha.inicio} helperText={erroresFecha.inicio}
           sx={{ bgcolor: '#fff', borderRadius: 2 }}
         />
         <TextField
           label="Fin"
           type="date"
-          size="small"
-          InputLabelProps={{ shrink: true }}
+          size="small" slotProps={{ inputLabel: { shrink: true } }}
           value={fechaFin}
-          onChange={(e) => setFechaFin(e.target.value)}
+          onChange={(e) => { setFechaFin(e.target.value); setErroresFecha((p) => ({ ...p, fin: '' })); }}
+          error={!!erroresFecha.fin} helperText={erroresFecha.fin}
           sx={{ bgcolor: '#fff', borderRadius: 2 }}
         />
         <Select 
@@ -355,6 +358,12 @@ export default function Reportes() {
           {loading ? <CircularProgress size={20} color="inherit" /> : 'Aplicar filtros'}
         </Button>
       </Paper>
+
+      {snackbar.open && (
+        <Alert severity={snackbar.severity} sx={{ mb: 2 }} onClose={() => setSnackbar({ ...snackbar, open: false })}>
+          {snackbar.message}
+        </Alert>
+      )}
 
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h6" fontWeight="bold" color="#1e293b">
@@ -380,20 +389,6 @@ export default function Reportes() {
         </Table>
       </TableContainer>
 
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={4000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert
-          severity={snackbar.severity}
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          variant="filled"
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
 
     </Box>
   );

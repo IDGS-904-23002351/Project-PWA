@@ -493,12 +493,12 @@ export default function Planta() {
                                 
                                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, width: '100%' }}>
                                     <Box sx={{ flex: '1 1 250px' }}>
-                                        <TextField label="Nombre de la planta *" size="small" fullWidth inputProps={{ maxLength: 120 }}
+                                        <TextField label="Nombre de la planta *" size="small" fullWidth slotProps={{ htmlInput: { maxLength: 120 } }}
                                             value={ubicacion.nombre} onChange={(e) => { setUbicacion({ ...ubicacion, nombre: e.target.value }); setErroresUbicacion(p => ({ ...p, nombre: '' })); }}
                                             error={!!erroresUbicacion.nombre} helperText={erroresUbicacion.nombre} />
                                     </Box>
                                     <Box sx={{ flex: '1 1 120px' }}>
-                                        <TextField label="Latitud *" size="small" fullWidth inputProps={{ inputMode: 'decimal', maxLength: 12 }}
+                                        <TextField label="Latitud *" size="small" fullWidth slotProps={{ htmlInput: { inputMode: 'decimal', maxLength: 12 } }}
                                             placeholder="21.063820"
                                             value={ubicacion.latitud} onChange={(e) => {
                                                 setUbicacion(prev => ({ ...prev, latitud: e.target.value }));
@@ -507,7 +507,7 @@ export default function Planta() {
                                             error={!!erroresUbicacion.latitud} helperText={erroresUbicacion.latitud} />
                                     </Box>
                                     <Box sx={{ flex: '1 1 120px' }}>
-                                        <TextField label="Longitud *" size="small" fullWidth inputProps={{ inputMode: 'decimal', maxLength: 12 }}
+                                        <TextField label="Longitud *" size="small" fullWidth slotProps={{ htmlInput: { inputMode: 'decimal', maxLength: 12 } }}
                                             placeholder="-101.582680"
                                             value={ubicacion.longitud} onChange={(e) => {
                                                 setUbicacion(prev => ({ ...prev, longitud: e.target.value }));
@@ -516,13 +516,13 @@ export default function Planta() {
                                             error={!!erroresUbicacion.longitud} helperText={erroresUbicacion.longitud} />
                                     </Box>
                                     <Box sx={{ flex: '1 1 150px' }}>
-                                        <TextField label="Radio de Tolerancia (m) *" type="number" size="small" fullWidth inputProps={{ min: 10, max: 2000 }}
+                                        <TextField label="Radio de Tolerancia (m) *" type="number" size="small" fullWidth slotProps={{ htmlInput: { min: 10, max: 2000 } }}
                                             value={ubicacion.radioToleranciaMetros} onChange={(e) => { setUbicacion({ ...ubicacion, radioToleranciaMetros: e.target.value }); setErroresUbicacion(p => ({ ...p, radio: '' })); }}
                                             error={!!erroresUbicacion.radio} helperText={erroresUbicacion.radio || 'De 10 a 2000 metros.'} />
                                     </Box>
                                     <Box sx={{ flex: '2 1 300px' }}>
                                         <TextField label="Dirección Física (Automática)" size="small" fullWidth 
-                                            value={ubicacion.direccion || ''} InputProps={{ readOnly: true }} placeholder="Haz clic en el mapa..." />
+                                            value={ubicacion.direccion || ''} slotProps={{ input: { readOnly: true } }} placeholder="Haz clic en el mapa..." />
                                     </Box>
                                 </Box>
 
@@ -563,8 +563,7 @@ export default function Planta() {
                                 label="Fecha del día festivo *" 
                                 type="date" 
                                 size="medium" 
-                                fullWidth 
-                                InputLabelProps={{ shrink: true }} 
+                                fullWidth slotProps={{ inputLabel: { shrink: true } }} 
                                 value={nuevoFestivo.fecha} 
                                 onChange={(e) => { setNuevoFestivo({ ...nuevoFestivo, fecha: e.target.value }); setErroresFestivo(p => ({ ...p, fecha: '' })); }} 
                                 error={!!erroresFestivo.fecha} helperText={erroresFestivo.fecha}
@@ -575,8 +574,7 @@ export default function Planta() {
                                 fullWidth 
                                 placeholder="Ej. Día de la Independencia" 
                                 value={nuevoFestivo.nombre} 
-                                onChange={(e) => { setNuevoFestivo({ ...nuevoFestivo, nombre: e.target.value }); setErroresFestivo(p => ({ ...p, nombre: '' })); }} 
-                                inputProps={{ maxLength: 120 }}
+                                onChange={(e) => { setNuevoFestivo({ ...nuevoFestivo, nombre: e.target.value }); setErroresFestivo(p => ({ ...p, nombre: '' })); }} slotProps={{ htmlInput: { maxLength: 120 } }}
                                 error={!!erroresFestivo.nombre} helperText={erroresFestivo.nombre}
                             />
                             <FormControlLabel 

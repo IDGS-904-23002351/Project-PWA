@@ -5,6 +5,7 @@ import {
 } from '@mui/material'
 import FileDownloadIcon from '@mui/icons-material/FileDownload'
 import { obtenerAsistencias, corregirAsistencia } from '../api/asistenciaApi' 
+import { departamentoApi } from '../api/departamentoApi'
 import { useAuth } from '../context/AuthContext' 
 import EncabezadoPagina from '../components/EncabezadoPagina'
 
@@ -17,6 +18,8 @@ export default function Asistencias() {
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
   const [filtroEstado, setFiltroEstado] = useState('todos')
+  const [filtroDepartamento, setFiltroDepartamento] = useState('todos')
+  const [departamentos, setDepartamentos] = useState([])
   // Fecha local (no UTC) en formato yyyy-mm-dd; vacío = todas las fechas
   const hoyLocal = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0]
   const [filtroFecha, setFiltroFecha] = useState(hoyLocal)
@@ -91,9 +94,9 @@ export default function Asistencias() {
 
   const handleExportarExcel = () => {
     const hora = (v) => (v ? v.split('T')[1]?.substring(0, 5) : '--')
-    const headers = "Fecha,Empleado,Entrada,Salida,Retardo,Método,Estado\n"
+    const headers = "Fecha,Empleado,Departamento,Entrada,Salida,Retardo,Método,Estado\n"
     // Se exporta lo que se ve en la tabla (con los filtros aplicados)
-    const rows = asistenciasFiltradas.map(a => `"${String(a.fecha || '').split('T')[0]}","${a.empleadoNombre || a.nombre || 'Empleado'}","${hora(a.horaEntrada)}","${hora(a.horaSalida)}","${a.retardo || '0 min'}","${a.metodo || ''}","${a.estado || ''}"`).join("\n")
+    const rows = asistenciasFiltradas.map(a => `"${String(a.fecha || '').split('T')[0]}","${a.empleadoNombre || a.nombre || 'Empleado'}","${a.departamento || ''}","${hora(a.horaEntrada)}","${hora(a.horaSalida)}","${a.retardo || '0 min'}","${a.metodo || ''}","${a.estado || ''}"`).join("\n")
     // \uFEFF al inicio: Excel reconoce los acentos
     const blob = new Blob(['\uFEFF' + headers + rows], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
@@ -105,11 +108,20 @@ export default function Asistencias() {
     document.body.removeChild(link)
   }
 
+  // Departamentos activos para el filtro
+  useEffect(() => {
+    if (!token) return
+    departamentoApi.listar(token)
+      .then((lista) => setDepartamentos((Array.isArray(lista) ? lista : []).filter((d) => (d.estado || 'ACTIVO') === 'ACTIVO')))
+      .catch(() => setDepartamentos([]))
+  }, [token])
+
   const asistenciasFiltradas = asistencias.filter(item => {
     const est = item.estado || ''
     const matchEstado = filtroEstado === 'todos' || est.toLowerCase() === filtroEstado.toLowerCase()
     const matchFecha = !filtroFecha || String(item.fecha || '').startsWith(filtroFecha)
-    return matchEstado && matchFecha
+    const matchDepartamento = filtroDepartamento === 'todos' || String(item.departamentoId) === filtroDepartamento
+    return matchEstado && matchFecha && matchDepartamento
   })
 
   return (
@@ -124,7 +136,7 @@ export default function Asistencias() {
         }
       />
 
-      <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+      <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
         <TextField
           size="small"
           type="date"
@@ -141,6 +153,12 @@ export default function Asistencias() {
           <MenuItem value="Incompleta">Incompleta</MenuItem>
           <MenuItem value="Justificada">Justificada</MenuItem>
         </TextField>
+        <TextField select size="small" value={filtroDepartamento} onChange={(e) => setFiltroDepartamento(e.target.value)} sx={{ width: 220, bgcolor: 'white', borderRadius: 2 }}>
+          <MenuItem value="todos">Todos los departamentos</MenuItem>
+          {departamentos.map((d) => (
+            <MenuItem key={d.id} value={String(d.id)}>{d.nombre}</MenuItem>
+          ))}
+        </TextField>
       </Box>
 
       {cargando && <CircularProgress sx={{ display: 'block', mx: 'auto', my: 4 }} />}
@@ -153,6 +171,8 @@ export default function Asistencias() {
             <TableHead sx={{ bgcolor: '#f8fafc' }}>
               <TableRow>
                 <TableCell sx={{ fontWeight: 600 }}>EMPLEADO</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>FECHA</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>DEPARTAMENTO</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>ENTRADA</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>SALIDA</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>RETARDO</TableCell>
@@ -164,7 +184,7 @@ export default function Asistencias() {
             <TableBody>
               {asistenciasFiltradas.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 4, color: 'text.secondary' }}>No hay registros de asistencias disponibles.</TableCell>
+                  <TableCell colSpan={9} align="center" sx={{ py: 4, color: 'text.secondary' }}>No hay registros con esos filtros.</TableCell>
                 </TableRow>
               ) : (
                 asistenciasFiltradas.map((item) => {
@@ -181,6 +201,8 @@ export default function Asistencias() {
                           {nombre}
                         </Typography>
                       </TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{String(item.fecha || '').split('T')[0].split('-').reverse().join('/')}</TableCell>
+                      <TableCell>{item.departamento || '—'}</TableCell>
                       <TableCell>{item.horaEntrada ? item.horaEntrada.split('T')[1]?.substring(0,8) : '--'}</TableCell>
                       <TableCell>{item.horaSalida ? item.horaSalida.split('T')[1]?.substring(0,8) : '--'}</TableCell>
                       <TableCell>{item.retardo || '0 min'}</TableCell>
@@ -213,7 +235,7 @@ export default function Asistencias() {
             </Paper>
 
             <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1.5 }}>Corregir registro</Typography>
-            <TextField label="Hora de entrada" type="time" fullWidth size="small" value={horaEntradaEdit} onChange={(e) => setHoraEntradaEdit(e.target.value)} sx={{ mb: 2 }} InputLabelProps={{ shrink: true }} />
+            <TextField label="Hora de entrada" type="time" fullWidth size="small" value={horaEntradaEdit} onChange={(e) => setHoraEntradaEdit(e.target.value)} sx={{ mb: 2 }} slotProps={{ inputLabel: { shrink: true } }} />
             <TextField select label="Estado" fullWidth size="small" value={estadoEdit} onChange={(e) => setEstadoEdit(e.target.value)} sx={{ mb: 2 }}>
               <MenuItem value="Puntual">Puntual</MenuItem>
               <MenuItem value="Retardo">Retardo</MenuItem>
@@ -221,7 +243,7 @@ export default function Asistencias() {
               <MenuItem value="Incompleta">Incompleta</MenuItem>
               <MenuItem value="Justificada">Justificada</MenuItem>
             </TextField>
-            <TextField label="Motivo de corrección *" multiline rows={3} fullWidth size="small" value={motivoCorreccion} onChange={(e) => { setMotivoCorreccion(e.target.value); setErrorPanel('') }} sx={{ mb: 2 }} inputProps={{ maxLength: 255 }} helperText={`${motivoCorreccion.length}/255`} />
+            <TextField label="Motivo de corrección *" multiline rows={3} fullWidth size="small" value={motivoCorreccion} onChange={(e) => { setMotivoCorreccion(e.target.value); setErrorPanel('') }} sx={{ mb: 2 }} slotProps={{ htmlInput: { maxLength: 255 } }} helperText={`${motivoCorreccion.length}/255`} />
             {errorPanel && <Alert severity="error" sx={{ mb: 2 }}>{errorPanel}</Alert>}
           </Box>
 

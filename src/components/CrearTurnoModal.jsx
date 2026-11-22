@@ -115,7 +115,7 @@ export default function CrearTurnoModal({ open, onClose, onSaved, token, turno =
         <Grid container spacing={2} sx={{ mt: 0.5 }}>
           <Grid item xs={12}>
             <TextField
-              fullWidth label="Nombre del turno *" name="nombre" inputProps={{ maxLength: 80 }}
+              fullWidth label="Nombre del turno *" name="nombre" slotProps={{ htmlInput: { maxLength: 80 } }}
               value={form.nombre} onChange={handleChange}
               placeholder="Ej. Matutino"
               error={!!errores.nombre} helperText={errores.nombre}
@@ -124,16 +124,14 @@ export default function CrearTurnoModal({ open, onClose, onSaved, token, turno =
           <Grid item xs={12} sm={6}>
             <TextField
               fullWidth label="Hora de inicio *" name="hora_inicio" type="time"
-              value={form.hora_inicio} onChange={handleChange}
-              InputLabelProps={{ shrink: true }}
+              value={form.hora_inicio} onChange={handleChange} slotProps={{ inputLabel: { shrink: true } }}
               error={!!errores.hora_inicio} helperText={errores.hora_inicio}
             />
           </Grid>
           <Grid item xs={12} sm={6}>
             <TextField
               fullWidth label="Hora de fin *" name="hora_fin" type="time"
-              value={form.hora_fin} onChange={handleChange}
-              InputLabelProps={{ shrink: true }}
+              value={form.hora_fin} onChange={handleChange} slotProps={{ inputLabel: { shrink: true } }}
               error={!!errores.hora_fin}
               helperText={errores.hora_fin || (form.hora_inicio && form.hora_fin && form.hora_fin < form.hora_inicio ? 'Turno nocturno: termina al día siguiente.' : '')}
             />
@@ -141,8 +139,7 @@ export default function CrearTurnoModal({ open, onClose, onSaved, token, turno =
           <Grid item xs={12}>
             <TextField
               fullWidth label="Minutos de tolerancia" name="minutos_tolerancia" type="number"
-              value={form.minutos_tolerancia} onChange={handleChange}
-              inputProps={{ min: 0, max: 120 }}
+              value={form.minutos_tolerancia} onChange={handleChange} slotProps={{ htmlInput: { min: 0, max: 120 } }}
               error={!!errores.minutos_tolerancia}
               helperText={errores.minutos_tolerancia || 'De 0 a 120 minutos.'}
             />

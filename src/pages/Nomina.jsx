@@ -65,16 +65,66 @@ export default function Nomina() {
         }
     };
 
+    // Errores por campo y error del servidor dentro de la ventana (antes: burbuja del navegador
+    // y el error salía en la página, detrás de la ventana)
+    const [erroresPeriodo, setErroresPeriodo] = useState({});
+    const [errorPeriodo, setErrorPeriodo] = useState('');
+    const [guardandoPeriodo, setGuardandoPeriodo] = useState(false);
+
+    const abrirNuevoPeriodo = () => {
+        setFormPeriodo(periodoVacio);
+        setErroresPeriodo({});
+        setErrorPeriodo('');
+        setOpenModalPeriodo(true);
+    };
+
+    const cambiarPeriodo = (campo, valor) => {
+        setFormPeriodo((p) => ({ ...p, [campo]: valor }));
+        setErroresPeriodo((p) => ({ ...p, [campo]: '' }));
+    };
+
+    // Mismas reglas que sp_GenerarPeriodoNominaAutomatico
+    const validarPeriodo = () => {
+        const f = formPeriodo;
+        const e = {};
+        if (!f.nombre.trim()) e.nombre = 'Escribe el nombre del periodo.';
+        if (!f.fechaInicio) e.fechaInicio = 'Elige la fecha de inicio.';
+        if (!f.fechaFin) e.fechaFin = 'Elige la fecha de fin.';
+        if (f.fechaInicio && f.fechaFin) {
+            const dias = Math.round((new Date(f.fechaFin) - new Date(f.fechaInicio)) / 86400000) + 1;
+            if (dias < 1) e.fechaFin = 'La fecha de fin no puede ser antes que la de inicio.';
+            else if (f.tipoPeriodoId === 1 && dias !== 7) e.fechaFin = `Un periodo semanal dura 7 días (este tiene ${dias}).`;
+            else if (f.tipoPeriodoId === 2 && (dias < 13 || dias > 16)) e.fechaFin = `Un periodo quincenal dura de 13 a 16 días (este tiene ${dias}).`;
+            else if (f.tipoPeriodoId === 3 && (dias < 28 || dias > 31)) e.fechaFin = `Un periodo mensual dura de 28 a 31 días (este tiene ${dias}).`;
+        }
+        if (f.fechaPago && f.fechaFin && f.fechaPago < f.fechaFin) e.fechaPago = 'La fecha de pago no puede ser antes de que termine el periodo.';
+        return e;
+    };
+
     const handleSubmitPeriodo = async (e) => {
         e.preventDefault();
+        setErrorPeriodo('');
+        const errores = validarPeriodo();
+        setErroresPeriodo(errores);
+        if (Object.keys(errores).length > 0) return;
+
+        setGuardandoPeriodo(true);
         try {
-            await nominaApi.guardarPeriodo(token, formPeriodo);
+            // La fecha de pago es opcional: vacía se manda como null (un texto vacío
+            // no se puede convertir a fecha y el servidor rechazaba todo el periodo).
+            await nominaApi.guardarPeriodo(token, {
+                ...formPeriodo,
+                nombre: formPeriodo.nombre.trim(),
+                fechaPago: formPeriodo.fechaPago || null,
+            });
             setMensaje({ tipo: 'success', texto: 'Periodo generado correctamente.' });
             setOpenModalPeriodo(false);
             setFormPeriodo(periodoVacio);
             cargarPeriodos();
         } catch (error) {
-            setMensaje({ tipo: 'error', texto: error.message || 'Error al procesar.' });
+            setErrorPeriodo(error.message || 'Error al procesar.');
+        } finally {
+            setGuardandoPeriodo(false);
         }
     };
 
@@ -179,13 +229,12 @@ export default function Nomina() {
                             size="small" 
                             value={buscarPeriodo} 
                             onChange={(e) => setBuscarPeriodo(e.target.value)} 
-                            sx={{ flexGrow: 1, bgcolor: '#fff', borderRadius: 2 }} 
-                            InputProps={{ startAdornment: <InputAdornment position="start"><Search /></InputAdornment> }} 
+                            sx={{ flexGrow: 1, bgcolor: '#fff', borderRadius: 2 }} slotProps={{ input: { startAdornment: <InputAdornment position="start"><Search /></InputAdornment> } }} 
                         />
                         <Button 
                             variant="contained" 
                             startIcon={<Add />} 
-                            onClick={() => setOpenModalPeriodo(true)} 
+                            onClick={abrirNuevoPeriodo} 
                             sx={{ 
                                 bgcolor: '#00897b', 
                                 textTransform: 'none', 
@@ -336,27 +385,27 @@ export default function Nomina() {
 
             <Dialog open={openModalPeriodo} onClose={() => setOpenModalPeriodo(false)} maxWidth="sm" fullWidth>
                 <DialogTitle sx={{ fontWeight: 'bold' }}>Generar Periodo</DialogTitle>
-                <Box component="form" onSubmit={handleSubmitPeriodo}>
+                <Box component="form" onSubmit={handleSubmitPeriodo} noValidate>
                     <DialogContent dividers sx={{ py: 3 }}>
                         <Stack spacing={3}>
+                            {errorPeriodo && <Alert severity="error">{errorPeriodo}</Alert>}
                             <TextField 
-                                label="Nombre del Periodo" 
+                                label="Nombre del Periodo *" 
                                 size="medium" 
                                 fullWidth 
-                                required 
                                 value={formPeriodo.nombre} 
-                                onChange={(e) => setFormPeriodo({ ...formPeriodo, nombre: e.target.value })} 
-                                inputProps={{ maxLength: 80 }}
+                                onChange={(e) => cambiarPeriodo('nombre', e.target.value)} slotProps={{ htmlInput: { maxLength: 80 } }}
+                                error={!!erroresPeriodo.nombre} helperText={erroresPeriodo.nombre}
                             />
                             
                             <TextField 
                                 select
-                                label="Tipo de Periodo" 
+                                label="Tipo de Periodo *" 
                                 size="medium" 
                                 fullWidth 
-                                required 
                                 value={formPeriodo.tipoPeriodoId} 
-                                onChange={(e) => setFormPeriodo({ ...formPeriodo, tipoPeriodoId: parseInt(e.target.value) })}
+                                onChange={(e) => { cambiarPeriodo('tipoPeriodoId', parseInt(e.target.value)); setErroresPeriodo((p) => ({ ...p, fechaFin: '' })); }}
+                                helperText="Semanal: 7 días · Quincenal: 13 a 16 días · Mensual: 28 a 31 días"
                             >
                                 <MenuItem value={1}>Semanal</MenuItem>
                                 <MenuItem value={2}>Quincenal</MenuItem>
@@ -364,16 +413,16 @@ export default function Nomina() {
                             </TextField>
 
                             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                                <TextField label="Fecha Inicio" type="date" size="medium" fullWidth required InputLabelProps={{ shrink: true }} value={formPeriodo.fechaInicio} onChange={(e) => setFormPeriodo({ ...formPeriodo, fechaInicio: e.target.value })} />
-                                <TextField label="Fecha Fin" type="date" size="medium" fullWidth required InputLabelProps={{ shrink: true }} value={formPeriodo.fechaFin} onChange={(e) => setFormPeriodo({ ...formPeriodo, fechaFin: e.target.value })} />
+                                <TextField label="Fecha Inicio *" type="date" size="medium" fullWidth slotProps={{ inputLabel: { shrink: true } }} value={formPeriodo.fechaInicio} onChange={(e) => cambiarPeriodo('fechaInicio', e.target.value)} error={!!erroresPeriodo.fechaInicio} helperText={erroresPeriodo.fechaInicio} />
+                                <TextField label="Fecha Fin *" type="date" size="medium" fullWidth slotProps={{ inputLabel: { shrink: true } }} value={formPeriodo.fechaFin} onChange={(e) => cambiarPeriodo('fechaFin', e.target.value)} error={!!erroresPeriodo.fechaFin} helperText={erroresPeriodo.fechaFin} />
                             </Stack>
                             
-                            <TextField label="Fecha de Pago" type="date" size="medium" fullWidth InputLabelProps={{ shrink: true }} value={formPeriodo.fechaPago} onChange={(e) => setFormPeriodo({ ...formPeriodo, fechaPago: e.target.value })} />
+                            <TextField label="Fecha de Pago" type="date" size="medium" fullWidth slotProps={{ inputLabel: { shrink: true } }} value={formPeriodo.fechaPago} onChange={(e) => cambiarPeriodo('fechaPago', e.target.value)} error={!!erroresPeriodo.fechaPago} helperText={erroresPeriodo.fechaPago} />
                         </Stack>
                     </DialogContent>
                     <DialogActions sx={{ p: 2, px: 3 }}>
                         <Button onClick={() => setOpenModalPeriodo(false)} color="inherit">Cancelar</Button>
-                        <Button type="submit" variant="contained" sx={{ bgcolor: '#00897b', '&:hover': { bgcolor: '#00695c' }, px: 3 }}>Guardar Periodo</Button>
+                        <Button type="submit" variant="contained" disabled={guardandoPeriodo} sx={{ bgcolor: '#00897b', '&:hover': { bgcolor: '#00695c' }, px: 3 }}>{guardandoPeriodo ? 'Guardando...' : 'Guardar Periodo'}</Button>
                     </DialogActions>
                 </Box>
             </Dialog>

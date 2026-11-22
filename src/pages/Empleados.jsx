@@ -186,14 +186,13 @@ export default function Empleados() {
             placeholder="Buscar por nombre o RFC..."
             size="small"
             value={buscar}
-            onChange={(e) => setBuscar(e.target.value)}
-            InputProps={{
+            onChange={(e) => setBuscar(e.target.value)} slotProps={{ input: {
               startAdornment: (
                 <InputAdornment position="start">
                   <Search color="action" />
                 </InputAdornment>
               ),
-            }}
+            } }}
             sx={{ flex: 1 }}
           />
           <Select size="small" value={filtroDepartamento} onChange={(e) => setFiltroDepartamento(e.target.value)} sx={{ minWidth: 180 }}>

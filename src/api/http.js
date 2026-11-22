@@ -25,7 +25,13 @@ export async function peticion(ruta, { token, headers, ...opciones } = {}) {
     if (respuesta.status === 401 && token) {
       window.dispatchEvent(new Event(EVENTO_SESION_EXPIRADA))
     }
-    const error = new Error(datos.mensaje || 'Ocurrió un error. Intenta de nuevo.')
+    // Si ASP.NET rechaza el JSON antes de llegar al controlador (un dato con formato
+    // que no puede leer, por ejemplo una fecha vacía) responde con "errors" y sin "mensaje".
+    const porFormato = respuesta.status === 400 && datos.errors
+    const error = new Error(
+      datos.mensaje ||
+      (porFormato ? 'Algún dato no tiene el formato correcto. Revisa el formulario.' : 'Ocurrió un error. Intenta de nuevo.')
+    )
     error.status = respuesta.status
     throw error
   }

@@ -177,14 +177,13 @@ export default function Departamentos() {
                     size="small"
                     fullWidth
                     value={buscar}
-                    onChange={(e) => setBuscar(e.target.value)}
-                    InputProps={{
+                    onChange={(e) => setBuscar(e.target.value)} slotProps={{ input: {
                         startAdornment: (
                             <InputAdornment position="start">
                                 <Search color="action" />
                             </InputAdornment>
                         ),
-                    }}
+                    } }}
                 />
             </Paper>
 
@@ -292,8 +291,7 @@ export default function Departamentos() {
                                 value={formDep.nombre} 
                                 onChange={(e) => { setFormDep({ ...formDep, nombre: e.target.value }); setErrorNombre(''); }} 
                                 error={!!errorNombre}
-                                helperText={errorNombre || `${formDep.nombre.length}/120`}
-                                inputProps={{ maxLength: 120 }}
+                                helperText={errorNombre || `${formDep.nombre.length}/120`} slotProps={{ htmlInput: { maxLength: 120 } }}
                             />
                             <TextField 
                                 label="Descripción" 
@@ -302,8 +300,7 @@ export default function Departamentos() {
                                 rows={3} 
                                 value={formDep.descripcion} 
                                 onChange={(e) => setFormDep({ ...formDep, descripcion: e.target.value })} 
-                                helperText={`${formDep.descripcion.length}/255`}
-                                inputProps={{ maxLength: 255 }}
+                                helperText={`${formDep.descripcion.length}/255`} slotProps={{ htmlInput: { maxLength: 255 } }}
                             />
                         </Stack>
                     </DialogContent>

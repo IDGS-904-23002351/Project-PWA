@@ -43,7 +43,9 @@ const MENU_COMPLETO_FALLBACK = [
   { id: 11, nombre: 'Configuración', ruta: '/configuracion' },
 ]
 
-export default function Sidebar() {
+// enCajon: se muestra dentro del cajón de pantallas chicas (ocupa toda la altura del cajón)
+// onNavegar: se llama al elegir una opción, para cerrar el cajón
+export default function Sidebar({ enCajon = false, onNavegar }) {
   const { sesion } = useAuth()
   const location = useLocation()
   const [opcionesMenu, setOpcionesMenu] = useState([])
@@ -70,9 +72,9 @@ export default function Sidebar() {
         flexShrink: 0,
         bgcolor: '#0b132b',
         color: 'white',
-        position: 'sticky',
+        position: enCajon ? 'static' : 'sticky',
         top: 0,
-        height: '100vh',
+        height: enCajon ? '100%' : '100vh',
         alignSelf: 'flex-start',
         boxSizing: 'border-box',
         p: 2,
@@ -120,6 +122,7 @@ export default function Sidebar() {
                   component={Link}
                   to={rutaLimpia || '/inicio'}
                   selected={estaActivo}
+                  onClick={() => onNavegar?.()}
                   sx={{
                     borderRadius: 2,
                     py: 1,
@@ -134,7 +137,7 @@ export default function Sidebar() {
                   <ListItemIcon sx={{ color: 'white', minWidth: 36 }}>
                     {ICONOS_MAP[item.nombre] || <HomeIcon />}
                   </ListItemIcon>
-                  <ListItemText primary={item.nombre} primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }} />
+                  <ListItemText primary={item.nombre} slotProps={{ primary: { fontSize: '0.9rem', fontWeight: 500 } }} />
                 </ListItemButton>
               </ListItem>
             )

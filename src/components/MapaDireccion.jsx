@@ -100,14 +100,13 @@ export default function MapaDireccion({ onDireccionSeleccionada }) {
           size="small"
           placeholder="Buscar dirección (Ej. Av. Reforma 222, CDMX)"
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          InputProps={{
+          onChange={(e) => setSearchQuery(e.target.value)} slotProps={{ input: {
             startAdornment: (
               <InputAdornment position="start">
                 <SearchIcon />
               </InputAdornment>
             ),
-          }}
+          } }}
         />
       </Box>
       {aviso && (

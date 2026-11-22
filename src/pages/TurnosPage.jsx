@@ -219,8 +219,7 @@ export default function TurnosPage() {
               size="small"
               value={turnoFiltro}
               onChange={(e) => { setTurnoFiltro(e.target.value); setPagina(1); }}
-              sx={{ width: 200, '& .MuiOutlinedInput-root': { borderRadius: 2, bgcolor: '#f8f9fa' } }}
-              SelectProps={{ displayEmpty: true }}
+              sx={{ width: 200, '& .MuiOutlinedInput-root': { borderRadius: 2, bgcolor: '#f8f9fa' } }} slotProps={{ select: { displayEmpty: true } }}
             >
               <MenuItem value="">Todos los turnos</MenuItem>
               {resumen.map(t => <MenuItem key={t.turno_id} value={t.turno_id}>{t.nombre}</MenuItem>)}
@@ -230,8 +229,7 @@ export default function TurnosPage() {
               placeholder="Buscar empleado o departamento"
               size="small"
               value={buscar}
-              onChange={(e) => setBuscar(e.target.value)}
-              InputProps={{ startAdornment: (<InputAdornment position="start"><SearchIcon color="action" fontSize="small" /></InputAdornment>) }}
+              onChange={(e) => setBuscar(e.target.value)} slotProps={{ input: { startAdornment: (<InputAdornment position="start"><SearchIcon color="action" fontSize="small" /></InputAdornment>) } }}
               sx={{ width: 250, '& .MuiOutlinedInput-root': { borderRadius: 2, bgcolor: '#f8f9fa', '& fieldset': { borderColor: 'transparent' }, '&:hover fieldset': { borderColor: COLORS.border }, '&.Mui-focused fieldset': { borderColor: COLORS.primary } } }}
             />
           </Box>
