@@ -37,14 +37,12 @@ const initialState = {
   tipo_contrato_id: 1,
 }
 
-// Fecha de hoy + 30 días en formato AAAA-MM-DD (hora local)
 const fechaMaximaIngreso = () => {
   const d = new Date()
   d.setDate(d.getDate() + 30)
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-// Salario mínimo general 2026 (zona general). El back valida con el valor de Configuración.
 const SALARIO_MINIMO = 315.04
 
 const selectProps = { displayEmpty: true }
@@ -267,7 +265,6 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
     } else if (form.rfc.trim().length !== 13) {
       nuevosErrores.rfc = 'El RFC debe tener exactamente 13 caracteres.'
     } else if (!/^[A-ZÑ&]{4}\d{6}[A-Z0-9]{3}$/i.test(form.rfc.trim())) {
-      // 4 letras + fecha de nacimiento AAMMDD + homoclave de 3
       nuevosErrores.rfc = 'El RFC no tiene un formato válido (ej. GOMA850101AB1).'
     }
 
@@ -276,13 +273,9 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
     } else if (form.curp.trim().length !== 18) {
       nuevosErrores.curp = 'La CURP debe tener 18 caracteres.'
     } else if (!/^[A-Z]{4}\d{6}[HMX][A-Z]{5}[A-Z0-9]\d$/i.test(form.curp.trim())) {
-      // 4 letras + AAMMDD + sexo (H/M/X) + estado (2) + consonantes (3) + homoclave + dígito
       nuevosErrores.curp = 'La CURP no tiene un formato válido.'
     }
 
-    // NSS y correo obligatorios: en la base de datos no se pueden repetir y
-    // SQL Server solo deja un registro vacío, así que el segundo empleado sin
-    // NSS o sin correo no se podía guardar
     if (!form.nss?.trim()) {
       nuevosErrores.nss = 'El NSS es obligatorio.'
     } else if (!/^\d{11}$/.test(form.nss.trim())) {
@@ -295,7 +288,6 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
       nuevosErrores.correo = 'El formato del correo no es válido.'
     }
 
-    // Solo números: antes se quitaban las letras antes de contar y "abc5512345678" pasaba
     if (form.telefono?.trim() && !/^\d{10}$/.test(form.telefono.trim())) {
       nuevosErrores.telefono = 'El teléfono debe tener 10 dígitos (solo números).'
     }
@@ -304,12 +296,10 @@ export default function EmpleadoModal({ open, onClose, empleado, onSaved, token 
       nuevosErrores.dir_cp = 'El código postal debe tener 5 dígitos.'
     }
 
-    // Fecha de ingreso: como máximo 30 días en el futuro (el SP valida lo mismo)
     if (form.fecha_ingreso && form.fecha_ingreso > fechaMaximaIngreso()) {
       nuevosErrores.fecha_ingreso = 'La fecha de ingreso no puede ser de más de 30 días en el futuro.'
     }
 
-    // Salario diario: obligatorio, número con hasta 2 decimales, no menor al mínimo
     const salarioTexto = String(form.salario_diario ?? '').trim()
     if (!salarioTexto) {
       nuevosErrores.salario_diario = 'El salario diario es obligatorio.'

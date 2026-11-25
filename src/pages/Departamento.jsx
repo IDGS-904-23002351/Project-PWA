@@ -20,7 +20,6 @@ export default function Departamentos() {
 
     const [openModal, setOpenModal] = useState(false);
     const [editando, setEditando] = useState(false);
-    // empresaId y rolId se conservan al editar: antes se mandaban vacíos y el SP los borraba
     const vacio = { id: 0, nombre: '', descripcion: '', estado: 'ACTIVO', empresaId: null, rolId: null };
     const [formDep, setFormDep] = useState(vacio);
     const [errorModal, setErrorModal] = useState('');
@@ -70,7 +69,6 @@ export default function Departamentos() {
         setMensaje({ tipo: '', texto: '' });
         setErrorModal('');
 
-        // Misma validación que el SP, pero mostrada debajo del campo
         if (!formDep.nombre.trim()) {
             setErrorNombre('Escribe el nombre del departamento.');
             return;
@@ -89,7 +87,6 @@ export default function Departamentos() {
             setOpenModal(false);
             cargarDepartamentos();
         } catch (error) {
-            // El error se muestra dentro de la ventana, que se queda abierta para corregir
             setErrorModal(error.message || 'Error al procesar la solicitud.');
         } finally {
             setGuardando(false);
@@ -129,12 +126,9 @@ export default function Departamentos() {
         try {
             const respuesta = await departamentoApi.eliminar(sesion.token, id);
             
-            // Si tu función peticion retorna directamente el JSON de respuesta:
             setMensaje({ tipo: 'success', texto: respuesta.mensaje || 'Departamento desactivado correctamente.' });
             cargarDepartamentos();
         } catch (error) {
-            // Aquí capturamos el mensaje que envió el backend (ej. "No se puede eliminar...")
-            // Dependiendo de cómo devuelva el error tu función 'peticion', intentamos extraer el texto:
             const mensajeError = error.response?.data?.mensaje || error.message || 'Error al eliminar el departamento.';
             setMensaje({ tipo: 'error', texto: mensajeError });
         }

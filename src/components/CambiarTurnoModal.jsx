@@ -13,7 +13,6 @@ export default function CambiarTurnoModal({ open, onClose, onSaved, empleado, tu
 
   useEffect(() => {
     if (open && empleado) {
-      // Empieza sin elegir: el turno actual se muestra aparte y no sale en la lista
       setNuevoTurno('')
       setError('')
       setErrorCampo('')

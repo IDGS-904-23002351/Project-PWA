@@ -4,13 +4,6 @@ import {
   Button, CircularProgress,
 } from '@mui/material'
 
-// Ventana para confirmar una acción con el mismo estilo que el resto de la web
-// (antes se usaba window.confirm, que muestra la ventana gris del navegador).
-//
-// Uso:
-//   const [confirmar, setConfirmar] = useState(null)
-//   setConfirmar({ titulo, mensaje, textoBoton, accion: async () => { ... } })
-//   <ConfirmarDialog datos={confirmar} onCerrar={() => setConfirmar(null)} />
 export default function ConfirmarDialog({ datos, onCerrar }) {
   const [procesando, setProcesando] = useState(false)
 

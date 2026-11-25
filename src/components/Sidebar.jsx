@@ -43,8 +43,6 @@ const MENU_COMPLETO_FALLBACK = [
   { id: 11, nombre: 'Configuración', ruta: '/configuracion' },
 ]
 
-// enCajon: se muestra dentro del cajón de pantallas chicas (ocupa toda la altura del cajón)
-// onNavegar: se llama al elegir una opción, para cerrar el cajón
 export default function Sidebar({ enCajon = false, onNavegar }) {
   const { sesion } = useAuth()
   const location = useLocation()

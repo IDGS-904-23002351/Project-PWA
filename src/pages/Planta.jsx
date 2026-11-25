@@ -21,9 +21,6 @@ L.Icon.Default.mergeOptions({
     shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-// El QR lleva SOLO el código guardado en la base (codigo_qr), que es lo que la app manda
-// y lo que sp_Movil_RegistrarAsistencia compara. Antes la imagen llevaba
-// "QR-Nomi-<código>-<fecha>", así que ningún escaneo coincidía.
 const urlImagenQr = (codigo, tamano) =>
     `https://api.qrserver.com/v1/create-qr-code/?size=${tamano}x${tamano}&margin=10&data=${encodeURIComponent(codigo)}`;
 
@@ -66,7 +63,6 @@ export default function Planta() {
     const [nuevoFestivo, setNuevoFestivo] = useState({ id: 0, fecha: '', nombre: '', esOficial: true });
 
     const [confirmar, setConfirmar] = useState(null);
-    // Errores debajo de cada campo (antes solo salía un mensaje general o la burbuja del navegador)
     const [erroresUbicacion, setErroresUbicacion] = useState({});
     const [erroresFestivo, setErroresFestivo] = useState({});
     const [errorFestivo, setErrorFestivo] = useState('');
@@ -100,7 +96,6 @@ export default function Planta() {
                     setQrVigente(qr);
                 }
             }
-            // Este año y el siguiente, para poder registrar los de enero desde diciembre
             const [esteAnio, siguiente] = await Promise.all([
                 plantaQrApi.listarDiasFestivos(token, anioActual).catch(() => []),
                 plantaQrApi.listarDiasFestivos(token, anioActual + 1).catch(() => []),
@@ -134,11 +129,7 @@ export default function Planta() {
         }, 400);
     };
 
-    // Solo para el clic en el mapa y el GPS: ahí sí se redondea a 6 decimales (~10 cm).
-    // Antes también se usaba al escribir, y al teclear "2" el campo se volvía "2.000000".
     const actualizarUbicacionPorCoords = (lat, lng) => {
-        // wrap(): si se hace clic en una "copia" del mapa (después de desplazarlo mucho),
-        // Leaflet da longitudes como -461.58; wrap() las regresa al rango -180 a 180
         const punto = L.latLng(Number(lat), Number(lng)).wrap();
         const latStr = punto.lat.toFixed(6);
         const lngStr = punto.lng.toFixed(6);
@@ -147,7 +138,6 @@ export default function Planta() {
         obtenerDireccionSegura(latStr, lngStr);
     };
 
-    // Al terminar de escribir una coordenada válida, se busca la dirección
     const alSalirDeCoordenada = () => {
         const la = Number(ubicacion.latitud);
         const ln = Number(ubicacion.longitud);
@@ -157,7 +147,6 @@ export default function Planta() {
         }
     };
 
-    // Toma la ubicación de la computadora o el celular (sirve para poner la planta donde estás y probar la app)
     const usarMiUbicacion = () => {
         if (!navigator.geolocation) {
             return setMensaje({ tipo: 'error', texto: 'Este navegador no puede obtener tu ubicación.' });
@@ -182,13 +171,11 @@ export default function Planta() {
         return null;
     }
 
-    // ---------- GUARDAR UBICACIÓN ----------
     const handleGuardarUbicacion = async (e) => {
         if (e) e.preventDefault();
         if (!token) return;
         setMensaje({ tipo: '', texto: '' });
 
-        // Antes un radio de 0 se cambiaba por 100 y una latitud vacía por 0 sin avisar
         const latitud = Number(ubicacion.latitud);
         const longitud = Number(ubicacion.longitud);
         const radioTexto = String(ubicacion.radioToleranciaMetros ?? '').trim();
@@ -227,7 +214,6 @@ export default function Planta() {
         }
         setLoadingQr(true);
         try {
-            // El código nuevo lo genera el servidor al azar (sp_RegenerarDispositivoQR)
             await plantaQrApi.regenerarQR(token, { 
                 ubicacionId: ubicacion.id, 
                 codigoQr: 'GENERADO-EN-SERVIDOR' 
@@ -274,7 +260,6 @@ export default function Planta() {
             if (err?.response?.data?.error) errorMsg = err.response.data.error;
             else if (err?.response?.data?.mensaje) errorMsg = err.response.data.mensaje;
             else if (err?.message) errorMsg = err.message;
-            // Dentro de la ventana, que se queda abierta para corregir
             setErrorFestivo(errorMsg);
         } finally {
             setSavingFestivo(false);

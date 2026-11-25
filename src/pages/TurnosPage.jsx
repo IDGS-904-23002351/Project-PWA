@@ -99,7 +99,6 @@ export default function TurnosPage() {
     }
   }
 
-  // Búsqueda en tiempo real: espera 400 ms después de la última tecla
   const [buscarAplicado, setBuscarAplicado] = useState('')
   useEffect(() => {
     const t = setTimeout(() => {
@@ -122,7 +121,6 @@ export default function TurnosPage() {
   const [confirmar, setConfirmar] = useState(null)
   const [aviso, setAviso] = useState({ tipo: '', texto: '' })
 
-  // Antes: window.confirm y alert (ventanas grises del navegador)
   const handleEliminarTurno = (turnoId) => {
     setConfirmar({
       titulo: 'Eliminar turno',
@@ -144,7 +142,6 @@ export default function TurnosPage() {
   const abrirModalCambiar = (asig) => {
     setEmpleadoSeleccionado({
       id: asig.empleado?.id || asig.empleado_id,
-      // turno_id viene como objeto { id, nombre } desde el back
       turno_id: asig.empleado?.turno_id?.id ?? asig.empleado?.turno_id ?? asig.turno_id,
       nombre: asig.empleado?.persona_id?.nombre || ''
     })

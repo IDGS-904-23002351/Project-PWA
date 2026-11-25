@@ -11,10 +11,8 @@ import { departamentoApi } from '../api/departamentoApi';
 import { useAuth } from '../context/AuthContext';
 import EncabezadoPagina from '../components/EncabezadoPagina';
 
-// Fecha local en formato yyyy-mm-dd (toISOString usa UTC y en la noche da el día siguiente)
 const aTexto = (fecha) => new Date(fecha.getTime() - fecha.getTimezoneOffset() * 60000).toISOString().split('T')[0];
 
-// Por defecto: del lunes de esta semana a hoy
 const lunesDeEstaSemana = () => {
   const d = new Date();
   const dia = d.getDay() === 0 ? 7 : d.getDay();
@@ -33,10 +31,8 @@ export default function Reportes() {
   const [activeTab, setActiveTab] = useState('asistencia'); 
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
-  // Aviso arriba de la tabla (antes era un Snackbar abajo a la derecha, distinto al resto de la web)
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'error' });
   const [erroresFecha, setErroresFecha] = useState({});
-  // Departamentos activos para el filtro
   useEffect(() => {
     if (!token) return;
     departamentoApi.listar(token)
@@ -46,7 +42,6 @@ export default function Reportes() {
 
   const handleAplicarFiltros = async () => {
     if (!token) return;
-    // Errores de fechas debajo del campo, como en los demás módulos
     const errores = {};
     if (!fechaInicio) errores.inicio = 'Elige la fecha de inicio.';
     if (!fechaFin) errores.fin = 'Elige la fecha de fin.';
@@ -211,7 +206,6 @@ export default function Reportes() {
     }
   };
 
-  // Filas del reporte actual como texto, en el mismo orden que las columnas
   const filasParaExportar = () => {
     const dinero = (n) => `$${Number(n ?? 0).toFixed(2)}`;
     return data.map((item) => {
@@ -227,7 +221,6 @@ export default function Reportes() {
 
   const nombreReporte = () => `${tarjetas.find((t) => t.id === activeTab)?.title || 'Reporte'} ${fechaInicio} a ${fechaFin}`;
 
-  // Excel: CSV con \uFEFF para que Excel lea bien los acentos
   const exportarExcel = () => {
     if (data.length === 0) {
       setSnackbar({ open: true, message: 'No hay datos para exportar.', severity: 'warning' });
@@ -246,7 +239,6 @@ export default function Reportes() {
     URL.revokeObjectURL(url);
   };
 
-  // PDF: abre una ventana con la tabla y el diálogo de impresión ("Guardar como PDF")
   const exportarPdf = () => {
     if (data.length === 0) {
       setSnackbar({ open: true, message: 'No hay datos para exportar.', severity: 'warning' });

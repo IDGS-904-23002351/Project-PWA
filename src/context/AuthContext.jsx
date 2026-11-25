@@ -30,7 +30,6 @@ function reducer(estado, accion) {
     case 'LOGOUT':
       return { sesion: null, cargando: false, error: null, aviso: accion.aviso ?? null }
     case 'SESION_EXPIRADA':
-      // Solo si había sesión (evita pisar el aviso de un cierre de sesión normal)
       return estado.sesion
         ? { sesion: null, cargando: false, error: null, aviso: 'Tu sesión terminó: venció o fue cerrada (por ejemplo, si tu cuenta se desactivó). Inicia sesión de nuevo.' }
         : estado
@@ -66,7 +65,6 @@ export function AuthProvider({ children }) {
     [estado.sesion],
   )
 
-  // Si cualquier petición recibe 401, la sesión ya no sirve: se regresa al login
   useEffect(() => {
     const alExpirar = () => dispatch({ type: 'SESION_EXPIRADA' })
     window.addEventListener(EVENTO_SESION_EXPIRADA, alExpirar)

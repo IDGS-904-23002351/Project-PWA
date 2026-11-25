@@ -44,7 +44,6 @@ export default function MapaDireccion({ onDireccionSeleccionada }) {
         const addr = data.address
         onDireccionSeleccionada?.({
           calle: `${addr.road || ''} ${addr.house_number || ''}`.trim(),
-          // En México OpenStreetMap guarda la colonia con distintos nombres; si no la tiene, se escribe a mano
           colonia: addr.neighbourhood || addr.suburb || addr.quarter || addr.residential || addr.city_district || addr.hamlet || '',
           ciudad: addr.city || addr.town || addr.village || '',
           estado: addr.state || '',

@@ -44,7 +44,6 @@ function Cambio({ antes, despues }) {
   )
 }
 
-// Si el texto es JSON, se muestra con un renglón por dato; si no, tal cual
 function TextoCambio({ valor }) {
   if (!valor) return <Typography color="text.secondary">—</Typography>
   let mostrar = valor
@@ -54,7 +53,6 @@ function TextoCambio({ valor }) {
       mostrar = Object.entries(objeto).map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : v}`).join('\n')
     }
   } catch {
-    // no es JSON
   }
   return (
     <Box component="pre" sx={{ m: 0, p: 1.5, bgcolor: '#f8fafc', borderRadius: 1, fontSize: 13, whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontFamily: 'inherit' }}>
@@ -65,7 +63,6 @@ function TextoCambio({ valor }) {
 
 export default function Bitacora() {
   const llamar = useApi()
-  // Movimiento abierto en la ventana de detalle (clic en un renglón)
   const [detalle, setDetalle] = useState(null)
   const [filtros, setFiltros] = useState(FILTROS_VACIOS)
   const [buscarAplicado, setBuscarAplicado] = useState('')

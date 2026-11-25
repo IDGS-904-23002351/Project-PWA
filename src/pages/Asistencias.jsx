@@ -20,14 +20,12 @@ export default function Asistencias() {
   const [filtroEstado, setFiltroEstado] = useState('todos')
   const [filtroDepartamento, setFiltroDepartamento] = useState('todos')
   const [departamentos, setDepartamentos] = useState([])
-  // Fecha local (no UTC) en formato yyyy-mm-dd; vacío = todas las fechas
   const hoyLocal = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0]
   const [filtroFecha, setFiltroFecha] = useState(hoyLocal)
   
   const [horaEntradaEdit, setHoraEntradaEdit] = useState('')
   const [estadoEdit, setEstadoEdit] = useState('')
   const [motivoCorreccion, setMotivoCorreccion] = useState('')
-  // Avisos en la página y en el panel (antes eran alert del navegador)
   const [aviso, setAviso] = useState('')
   const [errorPanel, setErrorPanel] = useState('')
   const [guardando, setGuardando] = useState(false)
@@ -95,9 +93,7 @@ export default function Asistencias() {
   const handleExportarExcel = () => {
     const hora = (v) => (v ? v.split('T')[1]?.substring(0, 5) : '--')
     const headers = "Fecha,Empleado,Departamento,Entrada,Salida,Retardo,Método,Estado\n"
-    // Se exporta lo que se ve en la tabla (con los filtros aplicados)
     const rows = asistenciasFiltradas.map(a => `"${String(a.fecha || '').split('T')[0]}","${a.empleadoNombre || a.nombre || 'Empleado'}","${a.departamento || ''}","${hora(a.horaEntrada)}","${hora(a.horaSalida)}","${a.retardo || '0 min'}","${a.metodo || ''}","${a.estado || ''}"`).join("\n")
-    // \uFEFF al inicio: Excel reconoce los acentos
     const blob = new Blob(['\uFEFF' + headers + rows], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
@@ -108,7 +104,6 @@ export default function Asistencias() {
     document.body.removeChild(link)
   }
 
-  // Departamentos activos para el filtro
   useEffect(() => {
     if (!token) return
     departamentoApi.listar(token)

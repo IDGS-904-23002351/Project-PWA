@@ -39,7 +39,6 @@ export default function Inicio() {
         setCargando(false)
       }
     }
-    // Las métricas son de toda la empresa: solo ADMIN y RRHH
     if (sesion?.token && !esEmpleado) {
       cargarMetricas()
     } else {

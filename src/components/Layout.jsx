@@ -4,8 +4,6 @@ import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Header from './Header' 
 
-// En computadora el menú está fijo a la izquierda. En pantallas chicas (celular o
-// tablet, menos de 900 px) se esconde y se abre como cajón con el botón ☰ del encabezado.
 export default function Layout() {
   const theme = useTheme()
   const esPantallaChica = useMediaQuery(theme.breakpoints.down('md'))

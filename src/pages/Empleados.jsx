@@ -38,7 +38,6 @@ export default function Empleados() {
     if (!sesion?.token) return
     setLoading(true)
     try {
-      // El back pagina de 20 en 20: se piden todos para que la búsqueda y los filtros vean a todos
       const data = await empleadoApi.listar(sesion.token, 'tamano_pagina=200')
       const lista = data?.empleados || (Array.isArray(data) ? data : [])
       setEmpleados(lista)
@@ -150,7 +149,6 @@ export default function Empleados() {
     return coincideEstado && coincideTexto && coincideDepartamento && coincideTurno
   })
 
-  // Opciones de los filtros con los departamentos y turnos que sí tienen empleados
   const opciones = (campo) =>
     [...new Set(empleados.map((emp) => emp[campo]?.nombre || emp[campo]?.Nombre).filter(Boolean))].sort()
   const departamentos = opciones('departamento_id')

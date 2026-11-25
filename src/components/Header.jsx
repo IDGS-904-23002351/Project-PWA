@@ -7,7 +7,6 @@ import MenuIcon from '@mui/icons-material/Menu'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
-// onAbrirMenu: solo llega en pantallas chicas; muestra el botón ☰ que abre el menú
 export default function Header({ onAbrirMenu }) {
   const { sesion, cerrarSesion } = useAuth()
   const navegar = useNavigate()

@@ -22,7 +22,6 @@ export default function Nomina() {
     const [periodos, setPeriodos] = useState([]);
     const [buscarPeriodo, setBuscarPeriodo] = useState('');
     const [openModalPeriodo, setOpenModalPeriodo] = useState(false);
-    // Los id son los de la tabla TipoPeriodo: 1 SEMANAL, 2 QUINCENAL, 3 MENSUAL
     const periodoVacio = { nombre: '', tipoPeriodoId: 2, fechaInicio: '', fechaFin: '', fechaPago: '' };
     const [formPeriodo, setFormPeriodo] = useState(periodoVacio);
 
@@ -65,8 +64,6 @@ export default function Nomina() {
         }
     };
 
-    // Errores por campo y error del servidor dentro de la ventana (antes: burbuja del navegador
-    // y el error salía en la página, detrás de la ventana)
     const [erroresPeriodo, setErroresPeriodo] = useState({});
     const [errorPeriodo, setErrorPeriodo] = useState('');
     const [guardandoPeriodo, setGuardandoPeriodo] = useState(false);
@@ -83,7 +80,6 @@ export default function Nomina() {
         setErroresPeriodo((p) => ({ ...p, [campo]: '' }));
     };
 
-    // Mismas reglas que sp_GenerarPeriodoNominaAutomatico
     const validarPeriodo = () => {
         const f = formPeriodo;
         const e = {};
@@ -110,8 +106,6 @@ export default function Nomina() {
 
         setGuardandoPeriodo(true);
         try {
-            // La fecha de pago es opcional: vacía se manda como null (un texto vacío
-            // no se puede convertir a fecha y el servidor rechazaba todo el periodo).
             await nominaApi.guardarPeriodo(token, {
                 ...formPeriodo,
                 nombre: formPeriodo.nombre.trim(),

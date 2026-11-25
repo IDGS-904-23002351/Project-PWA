@@ -37,7 +37,7 @@ export default function AppRouter() {
           <Route path="configuracion" element={<RutaPorRol roles={['ADMIN']}><Configuracion /></RutaPorRol>} />
         </Route>
       </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   )
 }

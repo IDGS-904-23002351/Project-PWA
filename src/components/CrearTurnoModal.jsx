@@ -7,7 +7,6 @@ import { turnoApi } from '../api/turnoApi'
 
 const initialState = { nombre: '', hora_inicio: '', hora_fin: '', minutos_tolerancia: 10 }
 
-// Minutos que dura el turno; si termina antes de la hora en que empieza, sigue al día siguiente
 const minutosTurno = (inicio, fin) => {
   const [hi, mi] = inicio.split(':').map(Number)
   const [hf, mf] = fin.split(':').map(Number)
@@ -15,14 +14,12 @@ const minutosTurno = (inicio, fin) => {
   return diferencia < 0 ? diferencia + 1440 : diferencia
 }
 
-// Sirve para crear y para editar: si recibe "turno" (del resumen), es edición
 export default function CrearTurnoModal({ open, onClose, onSaved, token, turno = null }) {
   const editando = Boolean(turno?.turno_id)
   const [form, setForm] = useState(initialState)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   
-  // Errores por campo
   const [errores, setErrores] = useState({})
 
   useEffect(() => {
@@ -43,7 +40,6 @@ export default function CrearTurnoModal({ open, onClose, onSaved, token, turno =
   const handleChange = (e) => {
     const { name, value } = e.target
     setForm({ ...form, [name]: value })
-    // Limpiar el error del campo al escribir
     if (errores[name]) setErrores({ ...errores, [name]: '' })
   }
 
@@ -51,13 +47,10 @@ export default function CrearTurnoModal({ open, onClose, onSaved, token, turno =
     setError('')
     const nuevosErrores = {}
 
-    // Validaciones
     if (!form.nombre.trim()) nuevosErrores.nombre = 'El nombre es obligatorio.'
     if (!form.hora_inicio) nuevosErrores.hora_inicio = 'La hora de inicio es obligatoria.'
     if (!form.hora_fin) nuevosErrores.hora_fin = 'La hora de fin es obligatoria.'
     
-    // Si la hora de fin es menor que la de inicio, es un turno nocturno
-    // (termina al día siguiente); el back lo marca como cruza_medianoche
     if (form.hora_inicio && form.hora_fin) {
       const minutos = minutosTurno(form.hora_inicio, form.hora_fin)
       if (minutos === 0) nuevosErrores.hora_fin = 'La hora de fin no puede ser igual a la de inicio.'
@@ -86,7 +79,7 @@ export default function CrearTurnoModal({ open, onClose, onSaved, token, turno =
         nombre: form.nombre.trim(),
         hora_inicio: formatearHora(form.hora_inicio),
         hora_fin: formatearHora(form.hora_fin),
-        minutos_tolerancia: Number(form.minutos_tolerancia) // 0 es válido (sin tolerancia)
+        minutos_tolerancia: Number(form.minutos_tolerancia) 
       }
 
       const r = editando
