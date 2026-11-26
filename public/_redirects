@@ -1,0 +1,2 @@
+/api/*  http://nomi.somee.com/api/:splat  200
+/*      /index.html                        200
